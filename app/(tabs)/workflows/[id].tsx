@@ -5,6 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, StatusBadge, ProgressBar, Avatar, Badge } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { formatDate } from '@/lib/utils';
@@ -16,6 +17,7 @@ import {
 export default function WorkflowDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const colors = useThemeColors();
   const workflow = useQuery(api.workflows.get, { id: id as Id<"workflows"> });
   const updateStatus = useMutation(api.workflows.updateStatus);
 
@@ -42,7 +44,7 @@ export default function WorkflowDetailScreen() {
       case 'awaiting_approval':
         return <Clock size={20} color={colors.warning[500]} />;
       default:
-        return <Circle size={20} color={colors.gray[300]} />;
+        return <Circle size={20} color={colors.text.tertiary} />;
     }
   };
 
@@ -58,7 +60,7 @@ export default function WorkflowDetailScreen() {
         title="Workflow"
         rightAction={
           <TouchableOpacity style={styles.moreButton}>
-            <MoreVertical size={24} color={colors.gray[600]} />
+            <MoreVertical size={24} color={colors.text.secondary} />
           </TouchableOpacity>
         }
       />
@@ -135,7 +137,7 @@ export default function WorkflowDetailScreen() {
                   )}
                   {step.requiresDocumentation && (
                     <View style={styles.requirement}>
-                      <FileText size={14} color={colors.gray[400]} />
+                      <FileText size={14} color={colors.text.tertiary} />
                       <Text style={styles.requirementText}>Docs required</Text>
                     </View>
                   )}
@@ -145,7 +147,7 @@ export default function WorkflowDetailScreen() {
                 </View>
               </View>
               
-              <ChevronRight size={20} color={colors.gray[400]} />
+              <ChevronRight size={20} color={colors.text.tertiary} />
             </Card>
           ))}
         </View>
@@ -206,12 +208,12 @@ const styles = StyleSheet.create({
   workflowName: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   workflowDescription: {
     fontSize: fontSize.base,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     lineHeight: 24,
     marginBottom: spacing.xl,
   },
@@ -229,16 +231,16 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[700],
+    color: colors.text.secondary,
   },
   progressValue: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   stepsCount: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   actions: {
@@ -253,7 +255,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   stepCard: {
@@ -262,9 +264,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   stepCardActive: {
-    borderColor: colors.primary[200],
+    borderColor: colors.primary[300],
     borderWidth: 1,
-    backgroundColor: colors.primary[50],
+    backgroundColor: colors.surfaceSecondary,
   },
   stepHeader: {
     alignItems: 'center',
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -282,7 +284,7 @@ const styles = StyleSheet.create({
   stepNumberText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   stepContent: {
     flex: 1,
@@ -290,12 +292,12 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   stepDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.md,
   },
   stepMeta: {
@@ -310,7 +312,7 @@ const styles = StyleSheet.create({
   },
   assigneeName: {
     fontSize: fontSize.xs,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
   requirement: {
@@ -319,7 +321,7 @@ const styles = StyleSheet.create({
   },
   requirementText: {
     fontSize: fontSize.xs,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginLeft: spacing.xs,
   },
   infoCard: {
@@ -333,15 +335,15 @@ const infoStyles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   label: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   value: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
 });

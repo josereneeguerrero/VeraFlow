@@ -6,13 +6,17 @@ import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button, Input, Divider } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Mail, Lock } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuthActions();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +84,7 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              leftIcon={<Mail size={20} color={colors.gray[400]} />}
+              leftIcon={<Mail size={20} color={colors.text.tertiary} />}
             />
 
             <Input
@@ -89,7 +93,7 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              leftIcon={<Lock size={20} color={colors.gray[400]} />}
+              leftIcon={<Lock size={20} color={colors.text.tertiary} />}
             />
 
             <TouchableOpacity
@@ -124,12 +128,13 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -140,22 +145,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   errorContainer: {
-    backgroundColor: colors.error[50],
+    backgroundColor: isDark ? colors.error[900] : colors.error[50],
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: isDark ? colors.error[700] : colors.error[200],
   },
   errorText: {
-    color: colors.error[700],
+    color: isDark ? colors.error[100] : colors.error[700],
     fontSize: fontSize.sm,
   },
   form: {
@@ -176,7 +183,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
 });

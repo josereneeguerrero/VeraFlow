@@ -6,7 +6,7 @@ import { SafeArea, Header } from '@/components/layout';
 import { Card, EmptyState, Badge } from '@/components/ui';
 import { DocumentPicker } from '@/components/ui/DocumentPicker';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime } from '@/lib/utils';
 import { FileText, Download, Trash2, Image, File, FileSpreadsheet, Film, Music } from 'lucide-react-native';
@@ -24,8 +24,9 @@ const getFileIcon = (type: string) => {
 
 export default function DocumentsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
 
   const workspace = useQuery(api.workspaces.getCurrent);
   const documents = useQuery(
@@ -184,7 +185,7 @@ export default function DocumentsScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: colors.background,
@@ -236,10 +237,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.primary[200],
+    borderColor: isDark ? colors.primary[700] : colors.primary[200],
   },
   uploadButtonText: {
     fontSize: fontSize.base,
@@ -267,7 +268,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

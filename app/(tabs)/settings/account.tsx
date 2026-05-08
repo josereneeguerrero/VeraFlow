@@ -68,13 +68,13 @@ export default function AccountSettingsScreen() {
             placeholder="Your name"
             value={name}
             onChangeText={setName}
-            leftIcon={<User size={20} color={colors.gray[400]} />}
+              leftIcon={<User size={20} color={colors.text.tertiary} />}
           />
           
           <View style={styles.emailField}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.emailValue}>
-              <Mail size={20} color={colors.gray[400]} />
+              <Mail size={20} color={colors.text.tertiary} />
               <Text style={styles.email}>{user?.email}</Text>
             </View>
             <Text style={styles.hint}>
@@ -100,7 +100,7 @@ export default function AccountSettingsScreen() {
                   onPress={() => setThemeMode(option.mode)}
                 >
                   <View style={[styles.themeIconContainer, isSelected && styles.themeIconSelected]}>
-                    <Icon size={20} color={isSelected ? colors.primary[500] : colors.gray[400]} />
+                    <Icon size={20} color={isSelected ? colors.primary[500] : colors.text.tertiary} />
                   </View>
                   <Text style={[styles.themeLabel, isSelected && styles.themeLabelSelected]}>
                     {option.label}
@@ -231,7 +231,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginRight: spacing.md,
   },
   themeIconSelected: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: colors.surfaceSecondary,
   },
   themeLabel: {
     flex: 1,
@@ -243,10 +243,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.primary[500],
   },
   successMessage: {
-    backgroundColor: colors.success[50],
+    backgroundColor: colors.surface,
     padding: spacing.md,
     borderRadius: borderRadius.md,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.success[200],
   },
   successText: {
     fontSize: fontSize.sm,

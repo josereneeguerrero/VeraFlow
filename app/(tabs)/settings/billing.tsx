@@ -4,13 +4,18 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, Badge, ProgressBar } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatDate } from '@/lib/utils';
 import { Check, Crown, Zap, Building2 } from 'lucide-react-native';
 
 export default function BillingScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
+  const usageStyles = createUsageStyles(colors);
   const workspace = useQuery(api.workspaces.getCurrent);
   const currentPlan = useQuery(
     api.billing.getCurrentPlan,
@@ -81,16 +86,23 @@ export default function BillingScreen() {
               label="Team Members"
               current={usage?.teamMembers || 0}
               limit={currentPlan?.limits?.teamMembers || 5}
+              styles={usageStyles}
+              colors={colors}
             />
             <UsageItem
               label="Active Workflows"
               current={usage?.activeWorkflows || 0}
               limit={currentPlan?.limits?.workflows || 3}
+              styles={usageStyles}
+              colors={colors}
             />
             <UsageItem
               label="Integrations"
               current={usage?.connectedIntegrations || 0}
               limit={currentPlan?.limits?.integrations || 2}
+              styles={usageStyles}
+              colors={colors}
+              isLast
             />
           </Card>
         </View>
@@ -108,7 +120,10 @@ export default function BillingScreen() {
                 style={[styles.planCard, isCurrent && styles.planCardCurrent]}
               >
                 <View style={styles.planCardHeader}>
-                  <View style={[styles.planIcon, { backgroundColor: colors.primary[50] }]}>
+                  <View style={[
+                    styles.planIcon,
+                    { backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50] }
+                  ]}>
                     <Icon size={24} color={colors.primary[500]} />
                   </View>
                   <View style={styles.planInfo}>
@@ -154,20 +169,26 @@ export default function BillingScreen() {
 function UsageItem({ 
   label, 
   current, 
-  limit 
+  limit,
+  styles: usageRowStyles,
+  colors: themeColors,
+  isLast,
 }: { 
   label: string; 
   current: number; 
   limit: number;
+  styles: ReturnType<typeof createUsageStyles>;
+  colors: ThemeColors;
+  isLast?: boolean;
 }) {
   const percentage = limit === -1 ? 0 : (current / limit) * 100;
   const isUnlimited = limit === -1;
   
   return (
-    <View style={usageStyles.item}>
-      <View style={usageStyles.header}>
-        <Text style={usageStyles.label}>{label}</Text>
-        <Text style={usageStyles.value}>
+    <View style={[usageRowStyles.item, isLast && usageRowStyles.itemLast]}>
+      <View style={usageRowStyles.header}>
+        <Text style={usageRowStyles.label}>{label}</Text>
+        <Text style={usageRowStyles.value}>
           {current} / {isUnlimited ? '∞' : limit}
         </Text>
       </View>
@@ -175,14 +196,14 @@ function UsageItem({
         <ProgressBar 
           value={percentage} 
           size="sm" 
-          color={percentage > 80 ? colors.warning[500] : colors.primary[500]}
+          color={percentage > 80 ? themeColors.warning[500] : themeColors.primary[500]}
         />
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -191,8 +212,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing['3xl'],
   },
   currentPlanCard: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: colors.primary[600],
     marginBottom: spacing.xl,
+    borderWidth: isDark ? 1 : 0,
+    borderColor: isDark ? colors.primary[400] : 'transparent',
   },
   planHeader: {
     flexDirection: 'row',
@@ -202,7 +225,8 @@ const styles = StyleSheet.create({
   },
   planLabel: {
     fontSize: fontSize.sm,
-    color: colors.primary[100],
+    color: colors.white,
+    opacity: 0.9,
   },
   planName: {
     fontSize: fontSize['2xl'],
@@ -218,10 +242,11 @@ const styles = StyleSheet.create({
   planPeriod: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.normal,
+    color: 'rgba(255,255,255,0.88)',
   },
   renewDate: {
     fontSize: fontSize.sm,
-    color: colors.primary[100],
+    color: 'rgba(255,255,255,0.85)',
     marginTop: spacing.md,
   },
   section: {
@@ -230,7 +255,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   usageCard: {
@@ -238,6 +263,8 @@ const styles = StyleSheet.create({
   },
   planCard: {
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.card.border,
   },
   planCardCurrent: {
     borderWidth: 2,
@@ -262,17 +289,17 @@ const styles = StyleSheet.create({
   planCardName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   planCardPrice: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   planPeriodSmall: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.normal,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   features: {
     marginBottom: spacing.lg,
@@ -284,34 +311,38 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     marginLeft: spacing.sm,
   },
   footer: {
     fontSize: fontSize.sm,
-    color: colors.gray[400],
+    color: colors.text.secondary,
     textAlign: 'center',
   },
 });
 
-const usageStyles = StyleSheet.create({
-  item: {
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    color: colors.gray[600],
-  },
-  value: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
-  },
-});
+const createUsageStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    item: {
+      padding: spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    itemLast: {
+      borderBottomWidth: 0,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: spacing.sm,
+    },
+    label: {
+      fontSize: fontSize.sm,
+      color: colors.text.secondary,
+    },
+    value: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.semibold,
+      color: colors.text.primary,
+    },
+  });

@@ -3,12 +3,16 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'r
 import { SafeArea, Header } from '@/components/layout';
 import { Card } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { 
   HelpCircle, MessageCircle, Mail, FileText, 
   ExternalLink, ChevronRight, BookOpen
 } from 'lucide-react-native';
 
 export default function HelpScreen() {
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   const faqItems = [
     {
       question: 'How do I invite team members?',
@@ -68,7 +72,7 @@ export default function HelpScreen() {
                   <Text style={styles.supportTitle}>{option.title}</Text>
                   <Text style={styles.supportDescription}>{option.description}</Text>
                 </View>
-                <ChevronRight size={20} color={colors.gray[400]} />
+                <ChevronRight size={20} color={colors.text.tertiary} />
               </Card>
             );
           })}
@@ -99,12 +103,12 @@ export default function HelpScreen() {
           <TouchableOpacity style={styles.resourceLink}>
             <FileText size={20} color={colors.primary[500]} />
             <Text style={styles.resourceText}>Privacy Policy</Text>
-            <ExternalLink size={16} color={colors.gray[400]} />
+            <ExternalLink size={16} color={colors.text.tertiary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.resourceLink}>
             <FileText size={20} color={colors.primary[500]} />
             <Text style={styles.resourceText}>Terms of Service</Text>
-            <ExternalLink size={16} color={colors.gray[400]} />
+            <ExternalLink size={16} color={colors.text.tertiary} />
           </TouchableOpacity>
         </View>
 
@@ -114,7 +118,7 @@ export default function HelpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -128,7 +132,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   supportCard: {
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -151,11 +155,11 @@ const styles = StyleSheet.create({
   supportTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   supportDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   faqCard: {
@@ -166,36 +170,38 @@ const styles = StyleSheet.create({
   },
   faqItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   faqQuestion: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   faqAnswer: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     lineHeight: 20,
   },
   resourceLink: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.surface,
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   resourceText: {
     flex: 1,
     fontSize: fontSize.base,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginLeft: spacing.md,
   },
   version: {
     fontSize: fontSize.sm,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     textAlign: 'center',
     marginTop: spacing.xl,
   },

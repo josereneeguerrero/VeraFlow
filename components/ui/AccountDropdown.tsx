@@ -11,7 +11,8 @@ import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { User, LogOut, ChevronDown } from 'lucide-react-native';
-import { colors, borderRadius, fontSize, fontWeight, spacing, shadows } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight, spacing, shadows } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Avatar } from './Avatar';
 
@@ -21,6 +22,9 @@ interface AccountDropdownProps {
 
 export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   const { signOut } = useAuthActions();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -52,7 +56,7 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
         activeOpacity={0.7}
       >
         <Avatar name={user?.name} size={avatarSize} />
-        <ChevronDown size={16} color={colors.gray[500]} style={styles.chevron} />
+        <ChevronDown size={16} color={colors.text.secondary} style={styles.chevron} />
       </TouchableOpacity>
 
       <Modal
@@ -84,7 +88,7 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuIcon}>
-                  <User size={18} color={colors.gray[600]} />
+                  <User size={18} color={colors.text.secondary} />
                 </View>
                 <Text style={styles.menuLabel}>Profile</Text>
               </TouchableOpacity>
@@ -112,7 +116,7 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -132,7 +136,7 @@ const styles = StyleSheet.create({
     ...shadows.lg,
   },
   dropdown: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     minWidth: 220,
     overflow: 'hidden',
@@ -141,7 +145,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.surface,
   },
   userDetails: {
     flex: 1,
@@ -150,16 +154,16 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   userEmail: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: 2,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.border,
   },
   menuItem: {
     flexDirection: 'row',
@@ -170,7 +174,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -178,17 +182,17 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   signOutItem: {
-    backgroundColor: colors.error[50],
+    backgroundColor: isDark ? colors.error[900] : colors.error[50],
   },
   signOutIcon: {
-    backgroundColor: colors.error[100],
+    backgroundColor: isDark ? colors.error[800] : colors.error[100],
   },
   signOutLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.error[600],
+    color: isDark ? colors.error[200] : colors.error[600],
   },
 });

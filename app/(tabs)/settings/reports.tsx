@@ -5,6 +5,7 @@ import { useQuery } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, ProgressBar, Badge } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { getScoreColor } from '@/lib/utils';
 import { 
@@ -16,6 +17,10 @@ type ReportType = 'compliance' | 'workflows' | 'team' | 'documentation' | 'audit
 
 export default function ReportsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
+  const statStyles = createStatStyles(colors);
   const workspace = useQuery(api.workspaces.getCurrent);
   const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
 
@@ -93,17 +98,17 @@ export default function ReportsScreen() {
               <Text style={styles.scoreLabel}>Readiness Score</Text>
             </View>
             <View style={styles.statsGrid}>
-              <StatItem label="Active Workflows" value={complianceSummary?.activeWorkflows || 0} />
-              <StatItem label="Completed" value={complianceSummary?.completedWorkflows || 0} />
-              <StatItem label="Open Items" value={complianceSummary?.openRecommendations || 0} />
-              <StatItem label="Critical" value={complianceSummary?.criticalItems || 0} color={colors.error[500]} />
+              <StatItem statStyles={statStyles} label="Active Workflows" value={complianceSummary?.activeWorkflows || 0} />
+              <StatItem statStyles={statStyles} label="Completed" value={complianceSummary?.completedWorkflows || 0} />
+              <StatItem statStyles={statStyles} label="Open Items" value={complianceSummary?.openRecommendations || 0} />
+              <StatItem statStyles={statStyles} label="Critical" value={complianceSummary?.criticalItems || 0} color={colors.error[500]} />
             </View>
           </View>
         );
 
       case 'workflows':
         return (
-          <View style={styles.reportContent}>
+              <View style={styles.reportContent}>
             {workflowCompletion?.map((workflow: any) => (
               <Card key={workflow._id} style={styles.workflowItem}>
                 <Text style={styles.workflowName}>{workflow.name}</Text>
@@ -183,7 +188,7 @@ export default function ReportsScreen() {
                 {item.completed ? (
                   <CheckCircle size={20} color={colors.success[500]} />
                 ) : (
-                  <XCircle size={20} color={colors.gray[300]} />
+                  <XCircle size={20} color={colors.text.tertiary} />
                 )}
                 <Text style={[
                   styles.checklistText,
@@ -237,14 +242,14 @@ export default function ReportsScreen() {
                   style={styles.reportCard}
                   onPress={() => setSelectedReport(report.id)}
                 >
-                  <View style={[styles.reportIcon, { backgroundColor: report.color + '20' }]}>
+                  <View style={[styles.reportIcon, { backgroundColor: report.color + (isDark ? '33' : '20') }]}>
                     <Icon size={24} color={report.color} />
                   </View>
                   <View style={styles.reportInfo}>
                     <Text style={styles.reportName}>{report.title}</Text>
                     <Text style={styles.reportDescription}>{report.description}</Text>
                   </View>
-                  <ChevronRight size={20} color={colors.gray[400]} />
+                  <ChevronRight size={20} color={colors.text.tertiary} />
                 </Card>
               );
             })}
@@ -255,7 +260,17 @@ export default function ReportsScreen() {
   );
 }
 
-function StatItem({ label, value, color }: { label: string; value: number; color?: string }) {
+function StatItem({
+  label,
+  value,
+  color,
+  statStyles,
+}: {
+  label: string;
+  value: number;
+  color?: string;
+  statStyles: ReturnType<typeof createStatStyles>;
+}) {
   return (
     <View style={statStyles.item}>
       <Text style={[statStyles.value, color && { color }]}>{value}</Text>
@@ -264,7 +279,7 @@ function StatItem({ label, value, color }: { label: string; value: number; color
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -275,7 +290,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.lg,
   },
   reportCard: {
@@ -297,12 +312,12 @@ const styles = StyleSheet.create({
   reportName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   reportDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   backToReports: {
     marginBottom: spacing.lg,
@@ -315,7 +330,7 @@ const styles = StyleSheet.create({
   reportTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xl,
   },
   reportContent: {
@@ -331,7 +346,7 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   statsGrid: {
@@ -344,7 +359,7 @@ const styles = StyleSheet.create({
   workflowName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   workflowMeta: {
@@ -355,11 +370,11 @@ const styles = StyleSheet.create({
   workflowProgress: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   workflowSteps: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   teamItem: {
     marginBottom: spacing.md,
@@ -367,11 +382,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   memberRole: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.md,
   },
   teamStats: {
@@ -383,11 +398,11 @@ const styles = StyleSheet.create({
   teamStatValue: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   teamStatLabel: {
     fontSize: fontSize.xs,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   docItem: {
     flexDirection: 'row',
@@ -403,11 +418,11 @@ const styles = StyleSheet.create({
   docTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   docWorkflow: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   emptyReport: {
     alignItems: 'center',
@@ -415,7 +430,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: fontSize.base,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     marginTop: spacing.md,
   },
   auditScore: {
@@ -427,16 +442,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   checklistText: {
     fontSize: fontSize.base,
-    color: colors.gray[700],
+    color: colors.text.primary,
     marginLeft: spacing.md,
     flex: 1,
   },
   checklistTextComplete: {
-    color: colors.gray[400],
+    color: colors.text.secondary,
     textDecorationLine: 'line-through',
   },
   exportButton: {
@@ -444,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.primary[50],
+    backgroundColor: colors.surfaceSecondary,
     borderRadius: borderRadius.lg,
   },
   exportText: {
@@ -455,7 +470,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const statStyles = StyleSheet.create({
+const createStatStyles = (colors: ThemeColors) => StyleSheet.create({
   item: {
     width: '50%',
     padding: spacing.md,
@@ -464,11 +479,11 @@ const statStyles = StyleSheet.create({
   value: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   label: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
 });

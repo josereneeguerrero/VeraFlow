@@ -4,11 +4,15 @@ import { useRouter } from 'expo-router';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button, Input } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { Mail, CheckCircle } from 'lucide-react-native';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -112,7 +116,7 @@ export default function ForgotPasswordScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
-              leftIcon={<Mail size={20} color={colors.gray[400]} />}
+              leftIcon={<Mail size={20} color={colors.text.tertiary} />}
             />
 
             <Button
@@ -138,12 +142,13 @@ export default function ForgotPasswordScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -154,22 +159,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     lineHeight: 24,
   },
   errorContainer: {
-    backgroundColor: colors.error[50],
+    backgroundColor: isDark ? colors.error[900] : colors.error[50],
     padding: spacing.md,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: isDark ? colors.error[700] : colors.error[200],
   },
   errorText: {
-    color: colors.error[700],
+    color: isDark ? colors.error[100] : colors.error[700],
     fontSize: fontSize.sm,
   },
   form: {
@@ -180,7 +187,7 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
   successContainer: {
@@ -195,22 +202,22 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   successMessage: {
     fontSize: fontSize.base,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
   emailHighlight: {
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   successHint: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: spacing['2xl'],

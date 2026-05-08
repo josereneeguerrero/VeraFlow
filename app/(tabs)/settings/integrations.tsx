@@ -5,7 +5,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, Badge } from '@/components/ui';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime } from '@/lib/utils';
 import { 
@@ -26,8 +26,9 @@ const iconMap: Record<string, any> = {
 
 export default function IntegrationsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const workspace = useQuery(api.workspaces.getCurrent);
   const integrations = useQuery(
     api.integrations.list,
@@ -123,7 +124,7 @@ export default function IntegrationsScreen() {
               <Card key={integration.provider} style={styles.integrationCard}>
                 <View style={styles.integrationHeader}>
                   <View style={styles.integrationIcon}>
-                    <Icon size={24} color={colors.gray[400]} />
+                    <Icon size={24} color={colors.text.tertiary} />
                   </View>
                   <View style={styles.integrationInfo}>
                     <Text style={styles.integrationName}>{integration.name}</Text>
@@ -152,7 +153,7 @@ export default function IntegrationsScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: colors.background,
@@ -181,13 +182,13 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
   },
   connectedIcon: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
   },
   integrationInfo: {
     flex: 1,

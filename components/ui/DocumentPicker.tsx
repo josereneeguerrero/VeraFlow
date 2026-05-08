@@ -4,7 +4,7 @@ import * as DocumentPickerExpo from 'expo-document-picker';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { Upload, FileText, X, Check } from 'lucide-react-native';
 import { Id } from '@/convex/_generated/dataModel';
 
@@ -21,8 +21,9 @@ export function DocumentPicker({
   onUploadComplete,
   onError,
 }: DocumentPickerProps) {
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<{ name: string; id: Id<"documents"> } | null>(null);
@@ -131,7 +132,7 @@ export function DocumentPicker({
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   container: {
     padding: spacing.xl,
     borderRadius: borderRadius.lg,
@@ -146,7 +147,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
@@ -172,9 +173,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.success[50],
+    backgroundColor: isDark ? colors.success[900] : colors.success[50],
     borderWidth: 1,
-    borderColor: colors.success[200],
+    borderColor: isDark ? colors.success[700] : colors.success[200],
   },
   uploadedIcon: {
     width: 48,
@@ -200,7 +201,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   uploadedStatusText: {
     fontSize: fontSize.sm,
-    color: colors.success[600],
+    color: isDark ? colors.success[100] : colors.success[600],
     marginLeft: spacing.xs,
   },
   removeButton: {

@@ -60,7 +60,7 @@ export default function RecommendationDetailScreen() {
       case 'critical': return colors.error[500];
       case 'high': return colors.warning[500];
       case 'medium': return colors.primary[500];
-      default: return colors.gray[400];
+      default: return colors.text.tertiary;
     }
   };
 
@@ -208,8 +208,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.tertiary,
   },
   whyCard: {
-    backgroundColor: colors.warning[50],
+    backgroundColor: colors.surfaceSecondary,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.warning[200],
   },
   whyHeader: {
     flexDirection: 'row',
@@ -228,8 +230,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 22,
   },
   actionCard: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: colors.surfaceSecondary,
     marginBottom: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.primary[200],
   },
   actionTitle: {
     fontSize: fontSize.sm,

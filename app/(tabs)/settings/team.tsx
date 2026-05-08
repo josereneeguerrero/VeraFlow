@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, Input, Avatar, Badge, EmptyState } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatDate } from '@/lib/utils';
 import { 
@@ -14,6 +15,10 @@ import {
 
 export default function TeamScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
+  const modalStyles = createModalStyles(colors, isDark);
   const workspace = useQuery(api.workspaces.getCurrent);
   const members = useQuery(
     api.workspaces.getMembers,
@@ -133,7 +138,7 @@ export default function TeamScreen() {
         {/* Empty State */}
         {members?.length === 0 && (
           <EmptyState
-            icon={<Users size={48} color={colors.gray[300]} />}
+            icon={<Users size={48} color={colors.text.tertiary} />}
             title="No team members yet"
             description="Invite your team to collaborate on compliance workflows"
             actionLabel="Invite Team Member"
@@ -146,7 +151,7 @@ export default function TeamScreen() {
           title="Invite Team Member"
           onPress={() => setShowInviteModal(true)}
           fullWidth
-          icon={<UserPlus size={20} color={colors.white} />}
+          icon={<UserPlus size={20} color={colors.text.inverse} />}
           style={styles.inviteButton}
         />
       </ScrollView>
@@ -161,7 +166,7 @@ export default function TeamScreen() {
         <SafeArea>
           <View style={modalStyles.header}>
             <TouchableOpacity onPress={() => setShowInviteModal(false)}>
-              <X size={24} color={colors.gray[600]} />
+              <X size={24} color={colors.text.secondary} />
             </TouchableOpacity>
             <Text style={modalStyles.title}>Invite Team Member</Text>
             <View style={{ width: 24 }} />
@@ -175,7 +180,7 @@ export default function TeamScreen() {
               onChangeText={setInviteEmail}
               keyboardType="email-address"
               autoCapitalize="none"
-              leftIcon={<Mail size={20} color={colors.gray[400]} />}
+              leftIcon={<Mail size={20} color={colors.text.tertiary} />}
             />
 
             <Text style={modalStyles.roleLabel}>Role</Text>
@@ -214,7 +219,7 @@ export default function TeamScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: typeof import('@/lib/theme').lightColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -226,7 +231,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -245,11 +250,11 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   statLabel: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   section: {
@@ -258,7 +263,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   memberCard: {
@@ -273,24 +278,24 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   memberEmail: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   pendingIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.warning[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.warning[50],
     alignItems: 'center',
     justifyContent: 'center',
   },
   inviteDate: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     marginTop: spacing.xs,
   },
   inviteButton: {
@@ -298,53 +303,57 @@ const styles = StyleSheet.create({
   },
 });
 
-const modalStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
-  },
-  content: {
-    padding: spacing.lg,
-  },
-  roleLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.gray[700],
-    marginBottom: spacing.sm,
-  },
-  roleOptions: {
-    flexDirection: 'row',
-    marginBottom: spacing.xl,
-  },
-  roleOption: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.gray[200],
-    alignItems: 'center',
-    marginRight: spacing.sm,
-  },
-  roleOptionActive: {
-    borderColor: colors.primary[500],
-    backgroundColor: colors.primary[50],
-  },
-  roleText: {
-    fontSize: fontSize.sm,
-    fontWeight: fontWeight.medium,
-    color: colors.gray[600],
-  },
-  roleTextActive: {
-    color: colors.primary[700],
-  },
-});
+const createModalStyles = (
+  colors: typeof import('@/lib/theme').lightColors,
+  isDark: boolean
+) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    title: {
+      fontSize: fontSize.lg,
+      fontWeight: fontWeight.semibold,
+      color: colors.text.primary,
+    },
+    content: {
+      padding: spacing.lg,
+    },
+    roleLabel: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.medium,
+      color: colors.text.secondary,
+      marginBottom: spacing.sm,
+    },
+    roleOptions: {
+      flexDirection: 'row',
+      marginBottom: spacing.xl,
+    },
+    roleOption: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      borderRadius: borderRadius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      marginRight: spacing.sm,
+    },
+    roleOptionActive: {
+      borderColor: colors.primary[500],
+      backgroundColor: isDark ? colors.primary[900] : colors.surfaceSecondary,
+    },
+    roleText: {
+      fontSize: fontSize.sm,
+      fontWeight: fontWeight.medium,
+      color: colors.text.secondary,
+    },
+    roleTextActive: {
+      color: isDark ? colors.primary[300] : colors.primary[700],
+    },
+  });

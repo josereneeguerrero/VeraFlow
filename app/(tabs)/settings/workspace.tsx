@@ -5,11 +5,15 @@ import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, Input, Badge } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Building2, Users, Target, Calendar } from 'lucide-react-native';
 
 export default function WorkspaceSettingsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   const workspace = useQuery(api.workspaces.getCurrent);
 
   if (!workspace) {
@@ -17,7 +21,7 @@ export default function WorkspaceSettingsScreen() {
       <SafeArea>
         <Header showBack title="Workspace Settings" />
         <View style={styles.loading}>
-          <Text>Loading...</Text>
+          <Text style={{ color: colors.text.secondary }}>Loading...</Text>
         </View>
       </SafeArea>
     );
@@ -113,7 +117,7 @@ export default function WorkspaceSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: typeof import('@/lib/theme').lightColors, isDark: boolean) => StyleSheet.create({
   loading: {
     flex: 1,
     alignItems: 'center',
@@ -134,13 +138,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   infoIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -150,12 +154,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   infoValue: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginTop: spacing.xs,
   },
   section: {
@@ -164,7 +168,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   goalsCard: {},
@@ -179,7 +183,9 @@ const styles = StyleSheet.create({
   },
   scoreCard: {
     alignItems: 'center',
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
+    borderWidth: 1,
+    borderColor: isDark ? colors.primary[700] : colors.primary[100],
   },
   scoreValue: {
     fontSize: 48,
@@ -188,7 +194,7 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: fontSize.base,
-    color: colors.primary[600],
+    color: colors.text.secondary,
     marginTop: spacing.sm,
   },
   dangerZone: {
@@ -201,18 +207,19 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   dangerCard: {
-    borderColor: colors.error[200],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.surface,
+    borderColor: isDark ? colors.error[700] : colors.error[200],
     borderWidth: 1,
   },
   dangerLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   dangerDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.lg,
   },
   deleteButton: {

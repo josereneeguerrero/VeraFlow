@@ -6,7 +6,7 @@ import { useAuthActions } from '@convex-dev/auth/react';
 import { SafeArea, PageHeader } from '@/components/layout';
 import { Card, Avatar, Badge, OfflineBanner } from '@/components/ui';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { 
@@ -17,8 +17,9 @@ import {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const { signOut } = useAuthActions();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -244,7 +245,7 @@ export default function SettingsScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: colors.background,
@@ -293,8 +294,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: isDark ? colors.primary[700] : colors.primary[200],
   },
   syncButtonText: {
     fontSize: fontSize.sm,
@@ -373,12 +376,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.error[50],
+    backgroundColor: isDark ? colors.error[900] : colors.error[50],
     borderRadius: borderRadius.lg,
     marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: isDark ? colors.error[700] : colors.error[200],
   },
   signOutButtonDisabled: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceSecondary,
+    borderColor: colors.border,
   },
   signOutText: {
     fontSize: fontSize.base,

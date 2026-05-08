@@ -13,7 +13,7 @@ import { WebView } from 'react-native-webview';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { Button } from './Button';
 import { Card } from './Card';
 import { Check, X, Zap, Crown, Building2, Sparkles } from 'lucide-react-native';
@@ -90,8 +90,9 @@ export function SubscriptionPopup({
   onSubscriptionComplete,
   userEmail,
 }: SubscriptionPopupProps) {
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('professional');
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -177,7 +178,7 @@ export function SubscriptionPopup({
             </Text>
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={handleCloseCheckout}>
-            <X size={24} color={colors.gray[500]} />
+            <X size={24} color={colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
@@ -230,7 +231,7 @@ export function SubscriptionPopup({
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseMain}>
-              <X size={24} color={colors.gray[500]} />
+              <X size={24} color={colors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -253,8 +254,8 @@ export function SubscriptionPopup({
                     <Card
                       style={[
                         styles.planCard,
+                        plan.popular && !isSelected && styles.planCardPopular,
                         isSelected && styles.planCardSelected,
-                        plan.popular && styles.planCardPopular,
                         (plan.id === 'starter' || plan.popular) && styles.planCardWithBadge,
                       ]}
                     >
@@ -364,7 +365,7 @@ function BenefitItem({ text, colors }: { text: string; colors: ThemeColors }) {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -417,7 +418,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
@@ -451,6 +452,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: spacing.md,
     position: 'relative',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.card.border,
   },
   planCardSelected: {
     borderWidth: 2,
@@ -458,7 +461,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   planCardPopular: {
     borderWidth: 2,
-    borderColor: colors.primary[200],
+    borderColor: isDark ? colors.primary[400] : colors.primary[200],
   },
   planCardWithBadge: {
     paddingTop: spacing['2xl'],
@@ -500,7 +503,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.surfaceSecondary : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -566,6 +569,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   benefitsTitle: {
     fontSize: fontSize.base,

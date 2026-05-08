@@ -3,13 +3,14 @@ import { View, Text, StyleSheet, ScrollView, Switch, Alert, Platform } from 'rea
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button } from '@/components/ui';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Bell, Mail, Smartphone, CheckCircle, XCircle } from 'lucide-react-native';
 
 export default function NotificationSettingsScreen() {
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const { expoPushToken, permissionStatus, registerForNotifications } = useNotifications();
 
   const [settings, setSettings] = useState({
@@ -148,7 +149,7 @@ export default function NotificationSettingsScreen() {
                   value={item.enabled && permissionStatus === 'granted'}
                   onValueChange={() => toggleSetting('push', item.id)}
                   disabled={permissionStatus !== 'granted'}
-                  trackColor={{ false: colors.surface, true: colors.primary[200] }}
+                  trackColor={{ false: colors.surface, true: isDark ? colors.primary[700] : colors.primary[200] }}
                   thumbColor={item.enabled && permissionStatus === 'granted' ? colors.primary[500] : colors.text.tertiary}
                 />
               </View>
@@ -171,7 +172,7 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={settings.email.enabled}
               onValueChange={toggleEmailCategory}
-              trackColor={{ false: colors.surface, true: colors.primary[200] }}
+              trackColor={{ false: colors.surface, true: isDark ? colors.primary[700] : colors.primary[200] }}
               thumbColor={settings.email.enabled ? colors.primary[500] : colors.text.tertiary}
             />
           </View>
@@ -193,7 +194,7 @@ export default function NotificationSettingsScreen() {
                   <Switch
                     value={item.enabled}
                     onValueChange={() => toggleSetting('email', item.id)}
-                    trackColor={{ false: colors.surface, true: colors.primary[200] }}
+                    trackColor={{ false: colors.surface, true: isDark ? colors.primary[700] : colors.primary[200] }}
                     thumbColor={item.enabled ? colors.primary[500] : colors.text.tertiary}
                   />
                 </View>
@@ -210,7 +211,7 @@ export default function NotificationSettingsScreen() {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: colors.background,
@@ -235,10 +236,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     marginRight: spacing.md,
   },
   statusIconSuccess: {
-    backgroundColor: colors.success[50],
+    backgroundColor: isDark ? colors.success[900] : colors.success[50],
   },
   statusIconWarning: {
-    backgroundColor: colors.warning[50],
+    backgroundColor: isDark ? colors.warning[900] : colors.warning[50],
   },
   statusInfo: {
     flex: 1,
@@ -269,7 +270,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,

@@ -4,13 +4,18 @@ import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Badge, EmptyState } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatDate } from '@/lib/utils';
 import { CheckCircle, XCircle, History } from 'lucide-react-native';
 
 export default function RecommendationHistoryScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
+  const cardStyles = createCardStyles(colors);
   const workspace = useQuery(api.workspaces.getCurrent);
   const history = useQuery(
     api.recommendations.getHistory,
@@ -35,7 +40,7 @@ export default function RecommendationHistoryScreen() {
                   <Text style={styles.sectionCount}>{actedItems.length}</Text>
                 </View>
                 {actedItems.map((rec: any) => (
-                  <HistoryCard key={rec._id} recommendation={rec} />
+                  <HistoryCard key={rec._id} recommendation={rec} cardStyles={cardStyles} />
                 ))}
               </View>
             )}
@@ -43,19 +48,19 @@ export default function RecommendationHistoryScreen() {
             {dismissedItems.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <XCircle size={20} color={colors.gray[400]} />
+                  <XCircle size={20} color={colors.text.tertiary} />
                   <Text style={styles.sectionTitle}>Dismissed</Text>
                   <Text style={styles.sectionCount}>{dismissedItems.length}</Text>
                 </View>
                 {dismissedItems.map((rec: any) => (
-                  <HistoryCard key={rec._id} recommendation={rec} isDismissed />
+                  <HistoryCard key={rec._id} recommendation={rec} isDismissed cardStyles={cardStyles} />
                 ))}
               </View>
             )}
           </>
         ) : (
           <EmptyState
-            icon={<History size={48} color={colors.gray[300]} />}
+            icon={<History size={48} color={colors.text.tertiary} />}
             title="No history yet"
             description="Completed and dismissed recommendations will appear here."
           />
@@ -68,9 +73,11 @@ export default function RecommendationHistoryScreen() {
 function HistoryCard({
   recommendation,
   isDismissed = false,
+  cardStyles,
 }: {
   recommendation: any;
   isDismissed?: boolean;
+  cardStyles: ReturnType<typeof createCardStyles>;
 }) {
   return (
     <Card style={[cardStyles.container, isDismissed && cardStyles.dismissed]}>
@@ -94,7 +101,7 @@ function HistoryCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -113,21 +120,23 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginLeft: spacing.sm,
     flex: 1,
   },
   sectionCount: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
-    backgroundColor: colors.gray[100],
+    color: colors.text.secondary,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 });
 
-const cardStyles = StyleSheet.create({
+const createCardStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },
@@ -143,21 +152,21 @@ const cardStyles = StyleSheet.create({
   title: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     flex: 1,
     marginRight: spacing.md,
   },
   titleDismissed: {
     textDecorationLine: 'line-through',
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   category: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
   date: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
   },
 });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 
 type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
 
@@ -20,8 +20,9 @@ export function Badge({
   style,
   dot = false,
 }: BadgeProps) {
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
 
   return (
     <View style={[styles.base, styles[variant], styles[`size_${size}` as keyof typeof styles], style]}>
@@ -70,7 +71,7 @@ export function PriorityBadge({ priority, size = 'sm' }: PriorityBadgeProps) {
   return <Badge label={config.label} variant={config.variant} size={size} />;
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -80,19 +81,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.surface,
   },
   primary: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
   },
   success: {
-    backgroundColor: colors.success[50],
+    backgroundColor: isDark ? colors.success[900] : colors.success[50],
   },
   warning: {
-    backgroundColor: colors.warning[50],
+    backgroundColor: isDark ? colors.warning[900] : colors.warning[50],
   },
   error: {
-    backgroundColor: colors.error[50],
+    backgroundColor: isDark ? colors.error[900] : colors.error[50],
   },
   info: {
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
   },
   size_sm: {
     paddingVertical: spacing.xs,
@@ -109,19 +110,19 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.text.secondary,
   },
   text_primary: {
-    color: colors.primary[700],
+    color: isDark ? colors.primary[200] : colors.primary[700],
   },
   text_success: {
-    color: colors.success[700],
+    color: isDark ? colors.success[200] : colors.success[700],
   },
   text_warning: {
-    color: colors.warning[700],
+    color: isDark ? colors.warning[200] : colors.warning[700],
   },
   text_error: {
-    color: colors.error[700],
+    color: isDark ? colors.error[200] : colors.error[700],
   },
   text_info: {
-    color: colors.primary[700],
+    color: isDark ? colors.primary[200] : colors.primary[700],
   },
   text_sm: {
     fontSize: fontSize.xs,

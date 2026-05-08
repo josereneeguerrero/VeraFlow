@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native
 import { useRouter } from 'expo-router';
 import { WifiOff, CloudOff, Clock, ChevronRight } from 'lucide-react-native';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
-import { useThemeColors, ThemeColors } from '@/lib/theme';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { formatRelativeTime } from '@/lib/utils';
 
@@ -13,8 +13,9 @@ interface OfflineIndicatorProps {
 
 export function OfflineIndicator({ showPendingActions = true }: OfflineIndicatorProps) {
   const router = useRouter();
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const { isOnline, pendingActionsCount, lastSyncTime } = useNetworkStatus();
   
   const slideAnim = useRef(new Animated.Value(-100)).current;
@@ -72,8 +73,9 @@ export function OfflineIndicator({ showPendingActions = true }: OfflineIndicator
 }
 
 export function OfflineBanner() {
+  const { isDark } = useTheme();
   const colors = useThemeColors();
-  const styles = createStyles(colors);
+  const styles = createStyles(colors, isDark);
   const { isOnline, pendingActionsCount } = useNetworkStatus();
 
   if (isOnline) return null;
@@ -89,13 +91,13 @@ export function OfflineBanner() {
   );
 }
 
-const createStyles = (colors: ThemeColors) => StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   container: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.error[600],
+    backgroundColor: isDark ? colors.error[900] : colors.error[600],
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     zIndex: 1000,
@@ -111,45 +113,45 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   title: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: '#FFFFFF',
+    color: colors.text.inverse,
   },
   subtitle: {
     fontSize: fontSize.xs,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: isDark ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
   lastSync: {
     fontSize: fontSize.xs,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: isDark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.7)',
     marginTop: spacing.sm,
     textAlign: 'right',
   },
   syncBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.warning[50],
+    backgroundColor: isDark ? colors.warning[900] : colors.warning[50],
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: colors.warning[200],
+    borderBottomColor: isDark ? colors.warning[700] : colors.warning[200],
   },
   syncText: {
     flex: 1,
     fontSize: fontSize.sm,
-    color: colors.warning[700],
+    color: isDark ? colors.warning[200] : colors.warning[700],
     marginLeft: spacing.sm,
   },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.warning[100],
+    backgroundColor: isDark ? colors.warning[900] : colors.warning[100],
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
   bannerText: {
     fontSize: fontSize.sm,
-    color: colors.warning[700],
+    color: isDark ? colors.warning[100] : colors.warning[700],
     marginLeft: spacing.sm,
   },
 });

@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea, PageHeader } from '@/components/layout';
 import { Card, Button, StatusBadge, ProgressBar, EmptyState } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatDate } from '@/lib/utils';
 import { Plus, ListChecks, ChevronRight, Filter } from 'lucide-react-native';
@@ -13,6 +14,9 @@ type FilterType = 'all' | 'active' | 'completed' | 'draft';
 
 export default function WorkflowsScreen() {
   const router = useRouter();
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const styles = createStyles(colors, isDark);
   const workspace = useQuery(api.workspaces.getCurrent);
   const workflows = useQuery(
     api.workflows.list,
@@ -49,7 +53,7 @@ export default function WorkflowsScreen() {
             title="New"
             onPress={() => router.push('/(tabs)/workflows/create')}
             size="sm"
-            icon={<Plus size={18} color={colors.white} />}
+            icon={<Plus size={18} color={colors.text.inverse} />}
           />
         }
       />
@@ -123,13 +127,13 @@ export default function WorkflowsScreen() {
                     Due {formatDate(workflow.dueDate)}
                   </Text>
                 )}
-                <ChevronRight size={16} color={colors.gray[400]} />
+                <ChevronRight size={16} color={colors.text.tertiary} />
               </View>
             </Card>
           ))
         ) : (
           <EmptyState
-            icon={<ListChecks size={48} color={colors.gray[300]} />}
+            icon={<ListChecks size={48} color={colors.text.tertiary} />}
             title={filter === 'all' ? "No workflows yet" : `No ${filter} workflows`}
             description={filter === 'all' 
               ? "Create your first workflow to start tracking compliance"
@@ -144,10 +148,10 @@ export default function WorkflowsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create({
   filters: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   filterContent: {
     paddingHorizontal: spacing.lg,
@@ -158,19 +162,22 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.full,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     marginRight: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   filterChipActive: {
-    backgroundColor: colors.primary[500],
+    backgroundColor: isDark ? colors.primary[800] : colors.primary[500],
+    borderColor: isDark ? colors.primary[700] : colors.primary[500],
   },
   filterText: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   filterTextActive: {
-    color: colors.white,
+    color: colors.text.inverse,
   },
   scrollView: {
     flex: 1,
@@ -191,7 +198,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.primary[50],
+    backgroundColor: isDark ? colors.primary[900] : colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -203,19 +210,19 @@ const styles = StyleSheet.create({
   workflowName: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   workflowDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   workflowProgress: {
     marginBottom: spacing.md,
   },
   progressText: {
     fontSize: fontSize.xs,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   workflowFooter: {
@@ -224,7 +231,7 @@ const styles = StyleSheet.create({
   },
   workflowMeta: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     flex: 1,
   },
   workflowDue: {
