@@ -1,5 +1,7 @@
-import { Tabs } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { useConvexAuth } from 'convex/react';
 import { 
   Home, LayoutDashboard, ListChecks, 
   Lightbulb, Settings 
@@ -7,6 +9,31 @@ import {
 import { colors, fontSize, spacing } from '@/lib/constants';
 
 export default function TabsLayout() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (isLoading || isAuthenticated || hasRedirected.current) {
+      return;
+    }
+
+    hasRedirected.current = true;
+    router.replace('/');
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <Tabs
       screenOptions={{

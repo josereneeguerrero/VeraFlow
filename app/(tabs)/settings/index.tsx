@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from 'convex/react';
+import { useQuery, useConvexAuth } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { SafeArea, PageHeader } from '@/components/layout';
 import { Card, Avatar, Badge } from '@/components/ui';
@@ -15,6 +15,8 @@ import {
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const user = useQuery(api.users.getCurrentUser);
   const workspace = useQuery(api.workspaces.getCurrent);
   const subscription = useQuery(
@@ -22,9 +24,15 @@ export default function SettingsScreen() {
     workspace ? { workspaceId: workspace._id } : 'skip'
   );
 
+  useEffect(() => {
+    if (isSigningOut && !isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isSigningOut, isAuthenticated, router]);
+
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     await signOut();
-    router.replace('/');
   };
 
   const menuItems = [
@@ -156,9 +164,15 @@ export default function SettingsScreen() {
         ))}
 
         {/* Sign Out */}
-        <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-          <LogOut size={20} color={colors.error[500]} />
-          <Text style={styles.signOutText}>Sign Out</Text>
+        <TouchableOpacity 
+          style={[styles.signOutButton, isSigningOut && styles.signOutButtonDisabled]} 
+          onPress={handleSignOut}
+          disabled={isSigningOut}
+        >
+          <LogOut size={20} color={isSigningOut ? colors.gray[400] : colors.error[500]} />
+          <Text style={[styles.signOutText, isSigningOut && styles.signOutTextDisabled]}>
+            {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.version}>Version 1.0.0</Text>
@@ -259,11 +273,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     marginTop: spacing.lg,
   },
+  signOutButtonDisabled: {
+    backgroundColor: colors.gray[100],
+  },
   signOutText: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
     color: colors.error[500],
     marginLeft: spacing.sm,
+  },
+  signOutTextDisabled: {
+    color: colors.gray[400],
   },
   version: {
     fontSize: fontSize.sm,

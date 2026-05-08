@@ -89,12 +89,36 @@ export default function OrganizationDetailsScreen() {
         <Text style={[styles.sectionTitle, styles.sectionSpacing]}>
           How large is your team?
         </Text>
-        <View style={styles.sizeOptions}>
-          {teamSizes.map((size) => (
+        <View style={styles.sizeOptionsRow}>
+          {teamSizes.slice(0, 3).map((size) => (
             <TouchableOpacity
               key={size}
               style={[
                 styles.sizeOption,
+                teamSize === size && styles.sizeOptionSelected,
+              ]}
+              onPress={() => setTeamSize(size)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.sizeText,
+                  teamSize === size && styles.sizeTextSelected,
+                ]}
+              >
+                {size}
+              </Text>
+              <Text style={styles.sizeLabel}>people</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={styles.sizeOptionsRow}>
+          {teamSizes.slice(3).map((size) => (
+            <TouchableOpacity
+              key={size}
+              style={[
+                styles.sizeOption,
+                styles.sizeOptionWide,
                 teamSize === size && styles.sizeOptionSelected,
               ]}
               onPress={() => setTeamSize(size)}
@@ -199,19 +223,26 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: colors.primary[700],
   },
-  sizeOptions: {
+  sizeOptionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
   sizeOption: {
     flex: 1,
     marginHorizontal: spacing.xs,
-    padding: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
     backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.gray[200],
     alignItems: 'center',
+    minWidth: 80,
+  },
+  sizeOptionWide: {
+    flex: 1,
+    maxWidth: '48%',
   },
   sizeOptionSelected: {
     borderColor: colors.primary[500],

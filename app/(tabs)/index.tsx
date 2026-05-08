@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
-import { Card, Button, Avatar, Badge, ProgressBar } from '@/components/ui';
+import { Card, Button, Avatar, Badge, ProgressBar, AccountDropdown } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime, getScoreColor } from '@/lib/utils';
@@ -61,10 +61,13 @@ export default function HomeScreen() {
             <Text style={styles.greeting}>{greeting()}</Text>
             <Text style={styles.userName}>{user?.name || 'there'}</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Bell size={24} color={colors.gray[700]} />
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Bell size={24} color={colors.gray[700]} />
+              <View style={styles.notificationBadge} />
+            </TouchableOpacity>
+            <AccountDropdown size="md" />
+          </View>
         </View>
 
         {/* Readiness Score Card */}
@@ -251,6 +254,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: spacing.xl,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
   },
   greeting: {
     fontSize: fontSize.base,

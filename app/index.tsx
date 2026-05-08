@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useConvexAuth } from 'convex/react';
@@ -13,14 +13,19 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const user = useQuery(api.users.getCurrentUser);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      if (user?.onboardingCompleted) {
-        router.replace('/(tabs)');
-      } else if (user) {
-        router.replace('/(onboarding)/workspace-setup');
-      }
+    if (isLoading || !isAuthenticated || hasRedirected.current) {
+      return;
+    }
+
+    if (user?.onboardingCompleted) {
+      hasRedirected.current = true;
+      router.replace('/(tabs)');
+    } else if (user) {
+      hasRedirected.current = true;
+      router.replace('/(onboarding)/workspace-setup');
     }
   }, [isAuthenticated, isLoading, user]);
 
