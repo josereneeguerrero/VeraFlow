@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
-import { Button, Card } from '@/components/ui';
+import { Button, Card, SubscriptionPopup } from '@/components/ui';
 import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { useOnboardingStore } from '@/lib/store';
 import { getScoreColor, getScoreLabel } from '@/lib/utils';
+import { api } from '@/convex/_generated/api';
 import { 
   TrendingUp, CheckCircle2, ListTodo, 
   Link2, Sparkles 
@@ -15,10 +17,12 @@ export default function ReadinessScoreScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ score: string; workspaceId: string }>();
   const { reset } = useOnboardingStore();
+  const user = useQuery(api.users.getCurrentUser);
   
   const score = parseInt(params.score || '0', 10);
   const [animatedScore] = useState(new Animated.Value(0));
   const [displayScore, setDisplayScore] = useState(0);
+  const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(true);
 
   useEffect(() => {
     Animated.timing(animatedScore, {
@@ -37,8 +41,17 @@ export default function ReadinessScoreScreen() {
   }, [score]);
 
   const handleGetStarted = () => {
+    setShowSubscriptionPopup(true);
+  };
+
+  const handleSubscriptionComplete = () => {
+    setShowSubscriptionPopup(false);
     reset();
     router.replace('/(tabs)');
+  };
+
+  const handleClosePopup = () => {
+    setShowSubscriptionPopup(false);
   };
 
   const scoreColor = getScoreColor(score);
@@ -121,6 +134,13 @@ export default function ReadinessScoreScreen() {
           You can always access settings and invite team members later.
         </Text>
       </ScrollView>
+
+      <SubscriptionPopup
+        visible={showSubscriptionPopup}
+        onClose={handleClosePopup}
+        onSubscriptionComplete={handleSubscriptionComplete}
+        userEmail={user?.email}
+      />
     </SafeArea>
   );
 }

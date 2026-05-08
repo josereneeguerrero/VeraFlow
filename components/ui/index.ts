@@ -7,3 +7,4 @@ export { Avatar, AvatarGroup } from './Avatar';
 export { EmptyState } from './EmptyState';
 export { Divider } from './Divider';
 export { AccountDropdown } from './AccountDropdown';
+export { SubscriptionPopup } from './SubscriptionPopup';

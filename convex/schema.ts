@@ -223,7 +223,11 @@ export default defineSchema({
     currentPeriodStart: v.number(),
     currentPeriodEnd: v.number(),
     cancelAtPeriodEnd: v.boolean(),
-    stripeCustomerId: v.optional(v.string()),
-    stripeSubscriptionId: v.optional(v.string()),
-  }).index("by_workspace", ["workspaceId"]),
+    polarCustomerId: v.optional(v.string()),
+    polarSubscriptionId: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_polarSubscriptionId", ["polarSubscriptionId"])
+    .index("by_customerEmail", ["customerEmail"]),
 });
