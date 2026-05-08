@@ -168,7 +168,9 @@ export function SubscriptionPopup({
             <Text style={styles.checkoutSubtitle}>
               {subscription?.status === 'active' || subscription?.status === 'trialing'
                 ? 'Subscription active, taking you to the dashboard.'
-                : 'Complete checkout to start your free trial.'}
+                : selectedPlan === 'starter'
+                  ? 'Complete checkout to start your 14-day free trial.'
+                  : 'Complete checkout to activate your subscription.'}
             </Text>
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={handleCloseCheckout}>
@@ -250,6 +252,7 @@ export function SubscriptionPopup({
                         styles.planCard,
                         isSelected && styles.planCardSelected,
                         plan.popular && styles.planCardPopular,
+                        (plan.id === 'starter' || plan.popular) && styles.planCardWithBadge,
                       ]}
                     >
                       {plan.id === 'starter' && (
@@ -312,7 +315,9 @@ export function SubscriptionPopup({
             </View>
 
             <View style={styles.benefitsSection}>
-              <Text style={styles.benefitsTitle}>What's included in your trial:</Text>
+              <Text style={styles.benefitsTitle}>
+                {selectedPlan === 'starter' ? "What's included in your trial:" : "What's included:"}
+              </Text>
               <View style={styles.benefitsList}>
                 <BenefitItem text="Full access to all features" />
                 <BenefitItem text="Unlimited compliance workflows" />
@@ -449,6 +454,9 @@ const styles = StyleSheet.create({
   planCardPopular: {
     borderWidth: 2,
     borderColor: colors.primary[200],
+  },
+  planCardWithBadge: {
+    paddingTop: spacing['2xl'],
   },
   trialBadge: {
     position: 'absolute',
