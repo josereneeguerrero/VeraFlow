@@ -1,6 +1,14 @@
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import {
+  action,
+  mutation,
+  query,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 
 const plans = {
   free: {
@@ -215,6 +223,216 @@ export const cancel = mutation({
   },
 });
 
+export const assertCheckoutAllowed = internalQuery({
+  args: {
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("userProfiles")
+      .filter((q) => q.eq(q.field("email"), args.email))
+      .first();
+    if (!profile) return false;
+
+    const member = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_user", (q) => q.eq("userId", profile.userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("workspaceId"), args.workspaceId),
+          q.eq(q.field("status"), "active")
+        )
+      )
+      .first();
+
+    return member !== null;
+  },
+});
+
+export const createPaddleCheckout = action({
+  args: {
+    workspaceId: v.id("workspaces"),
+    plan: v.union(
+      v.literal("starter"),
+      v.literal("professional"),
+      v.literal("enterprise")
+    ),
+  },
+  handler: async (
+    ctx,
+    args
+  ): Promise<
+    { success: true; checkoutUrl: string } | { success: false; error: string }
+  > => {
+    const identity = await ctx.auth.getUserIdentity();
+    const email = identity?.email;
+    if (!email) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const allowed = await ctx.runQuery(internal.billing.assertCheckoutAllowed, {
+      workspaceId: args.workspaceId,
+      email,
+    });
+    if (!allowed) {
+      return { success: false, error: "No access to this workspace" };
+    }
+
+    const apiKey = process.env.PADDLE_API_KEY;
+    if (!apiKey) {
+      return { success: false, error: "Billing not configured" };
+    }
+
+    let priceId: string | undefined;
+    switch (args.plan) {
+      case "starter":
+        priceId = process.env.PADDLE_PRICE_STARTER;
+        break;
+      case "professional":
+        priceId = process.env.PADDLE_PRICE_PROFESSIONAL;
+        break;
+      case "enterprise":
+        priceId = process.env.PADDLE_PRICE_ENTERPRISE;
+        break;
+    }
+    if (!priceId?.trim()) {
+      return { success: false, error: "Price ID not configured for this plan" };
+    }
+
+    const country =
+      process.env.PADDLE_CHECKOUT_DEFAULT_COUNTRY_CODE?.trim() || "HN";
+
+    const listRes = await fetch(
+      `https://api.paddle.com/customers?email=${encodeURIComponent(email)}&per_page=1`,
+      { headers: { Authorization: `Bearer ${apiKey}` } }
+    );
+    const listJson = (await listRes.json()) as {
+      data?: { id: string }[];
+      error?: { detail?: string };
+    };
+
+    let customerId: string | undefined;
+
+    if (!listRes.ok) {
+      return {
+        success: false,
+        error:
+          listJson.error?.detail ??
+          `Failed to look up customer (${listRes.status})`,
+      };
+    }
+
+    if (listJson.data?.length) {
+      customerId = listJson.data[0].id;
+    } else {
+      const createRes = await fetch("https://api.paddle.com/customers", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          name: identity.name ?? undefined,
+        }),
+      });
+      const createJson = (await createRes.json()) as {
+        data?: { id: string };
+        error?: { detail?: string };
+      };
+      if (!createRes.ok || !createJson.data?.id) {
+        return {
+          success: false,
+          error:
+            createJson.error?.detail ??
+            `Failed to create Paddle customer (${createRes.status})`,
+        };
+      }
+      customerId = createJson.data.id;
+    }
+
+    const addrRes = await fetch(
+      `https://api.paddle.com/customers/${customerId}/addresses`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          country_code: country,
+          description: "Billing",
+        }),
+      }
+    );
+    const addrJson = (await addrRes.json()) as {
+      data?: { id: string };
+      error?: { detail?: string };
+    };
+    if (!addrRes.ok || !addrJson.data?.id) {
+      return {
+        success: false,
+        error:
+          addrJson.error?.detail ??
+          `Failed to create billing address (${addrRes.status})`,
+      };
+    }
+
+    const txRes = await fetch("https://api.paddle.com/transactions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        items: [{ price_id: priceId.trim(), quantity: 1 }],
+        customer_id: customerId,
+        address_id: addrJson.data.id,
+        collection_mode: "automatic",
+        custom_data: {
+          workspaceId: args.workspaceId,
+          plan: args.plan,
+        },
+      }),
+    });
+    const txJson = (await txRes.json()) as {
+      data?: { id: string; checkout?: { url?: string | null } };
+      error?: { detail?: string };
+    };
+
+    if (!txRes.ok || !txJson.data?.id) {
+      return {
+        success: false,
+        error:
+          txJson.error?.detail ??
+          `Failed to create checkout transaction (${txRes.status})`,
+      };
+    }
+
+    let checkoutUrl = txJson.data.checkout?.url ?? null;
+    if (!checkoutUrl) {
+      const getRes = await fetch(
+        `https://api.paddle.com/transactions/${txJson.data.id}?include=checkout`,
+        { headers: { Authorization: `Bearer ${apiKey}` } }
+      );
+      const getJson = (await getRes.json()) as {
+        data?: { checkout?: { url?: string | null } };
+      };
+      checkoutUrl = getJson.data?.checkout?.url ?? null;
+    }
+
+    if (!checkoutUrl) {
+      return {
+        success: false,
+        error: "Paddle did not return a checkout URL",
+      };
+    }
+
+    return { success: true, checkoutUrl };
+  },
+});
+
 export const getSubscriptionByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {
@@ -233,13 +451,13 @@ export const getSubscriptionByEmail = query({
   },
 });
 
-export const getSubscriptionByPolarId = query({
-  args: { polarSubscriptionId: v.string() },
+export const getSubscriptionByPaddleId = query({
+  args: { paddleSubscriptionId: v.string() },
   handler: async (ctx, args) => {
     const subscription = await ctx.db
       .query("subscriptions")
-      .withIndex("by_polarSubscriptionId", (q) =>
-        q.eq("polarSubscriptionId", args.polarSubscriptionId)
+      .withIndex("by_paddleSubscriptionId", (q) =>
+        q.eq("paddleSubscriptionId", args.paddleSubscriptionId)
       )
       .first();
 
@@ -253,10 +471,10 @@ export const getSubscriptionByPolarId = query({
   },
 });
 
-export const upsertSubscriptionFromPolar = internalMutation({
+export const upsertSubscriptionFromPaddle = internalMutation({
   args: {
-    polarSubscriptionId: v.string(),
-    polarCustomerId: v.string(),
+    paddleSubscriptionId: v.string(),
+    paddleCustomerId: v.string(),
     customerEmail: v.string(),
     status: v.union(
       v.literal("active"),
@@ -273,17 +491,20 @@ export const upsertSubscriptionFromPolar = internalMutation({
     currentPeriodStart: v.number(),
     currentPeriodEnd: v.number(),
     cancelAtPeriodEnd: v.boolean(),
+    workspaceIdHint: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("subscriptions")
-      .withIndex("by_polarSubscriptionId", (q) =>
-        q.eq("polarSubscriptionId", args.polarSubscriptionId)
+      .withIndex("by_paddleSubscriptionId", (q) =>
+        q.eq("paddleSubscriptionId", args.paddleSubscriptionId)
       )
       .first();
 
     if (existing) {
       await ctx.db.patch(existing._id, {
+        paddleCustomerId: args.paddleCustomerId,
+        paddleSubscriptionId: args.paddleSubscriptionId,
         status: args.status,
         plan: args.plan,
         currentPeriodStart: args.currentPeriodStart,
@@ -292,6 +513,46 @@ export const upsertSubscriptionFromPolar = internalMutation({
         customerEmail: args.customerEmail,
       });
       return existing._id;
+    }
+
+    if (args.workspaceIdHint) {
+      try {
+        const workspace = await ctx.db.get(args.workspaceIdHint as Id<"workspaces">);
+        if (workspace) {
+          const existingWorkspaceSub = await ctx.db
+            .query("subscriptions")
+            .withIndex("by_workspace", (q) => q.eq("workspaceId", workspace._id))
+            .first();
+
+          if (existingWorkspaceSub) {
+            await ctx.db.patch(existingWorkspaceSub._id, {
+              paddleSubscriptionId: args.paddleSubscriptionId,
+              paddleCustomerId: args.paddleCustomerId,
+              status: args.status,
+              plan: args.plan,
+              currentPeriodStart: args.currentPeriodStart,
+              currentPeriodEnd: args.currentPeriodEnd,
+              cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+              customerEmail: args.customerEmail,
+            });
+            return existingWorkspaceSub._id;
+          }
+
+          return await ctx.db.insert("subscriptions", {
+            workspaceId: workspace._id,
+            paddleSubscriptionId: args.paddleSubscriptionId,
+            paddleCustomerId: args.paddleCustomerId,
+            customerEmail: args.customerEmail,
+            status: args.status,
+            plan: args.plan,
+            currentPeriodStart: args.currentPeriodStart,
+            currentPeriodEnd: args.currentPeriodEnd,
+            cancelAtPeriodEnd: args.cancelAtPeriodEnd,
+          });
+        }
+      } catch (e) {
+        console.error("workspaceIdHint lookup failed:", e);
+      }
     }
 
     const userProfile = await ctx.db
@@ -308,8 +569,8 @@ export const upsertSubscriptionFromPolar = internalMutation({
 
       if (existingByEmail) {
         await ctx.db.patch(existingByEmail._id, {
-          polarSubscriptionId: args.polarSubscriptionId,
-          polarCustomerId: args.polarCustomerId,
+          paddleSubscriptionId: args.paddleSubscriptionId,
+          paddleCustomerId: args.paddleCustomerId,
           status: args.status,
           plan: args.plan,
           currentPeriodStart: args.currentPeriodStart,
@@ -329,8 +590,8 @@ export const upsertSubscriptionFromPolar = internalMutation({
 
     if (existingWorkspaceSub) {
       await ctx.db.patch(existingWorkspaceSub._id, {
-        polarSubscriptionId: args.polarSubscriptionId,
-        polarCustomerId: args.polarCustomerId,
+        paddleSubscriptionId: args.paddleSubscriptionId,
+        paddleCustomerId: args.paddleCustomerId,
         status: args.status,
         plan: args.plan,
         currentPeriodStart: args.currentPeriodStart,
@@ -343,8 +604,8 @@ export const upsertSubscriptionFromPolar = internalMutation({
 
     return await ctx.db.insert("subscriptions", {
       workspaceId: userProfile.currentWorkspaceId,
-      polarSubscriptionId: args.polarSubscriptionId,
-      polarCustomerId: args.polarCustomerId,
+      paddleSubscriptionId: args.paddleSubscriptionId,
+      paddleCustomerId: args.paddleCustomerId,
       customerEmail: args.customerEmail,
       status: args.status,
       plan: args.plan,
@@ -408,33 +669,5 @@ export const checkPlanLimits = query({
         canAdd: limits.integrations === -1 || integrations.length < limits.integrations,
       },
     };
-  },
-});
-
-export const updateSubscriptionStatus = internalMutation({
-  args: {
-    polarSubscriptionId: v.string(),
-    status: v.union(
-      v.literal("active"),
-      v.literal("canceled"),
-      v.literal("past_due"),
-      v.literal("trialing")
-    ),
-    cancelAtPeriodEnd: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const subscription = await ctx.db
-      .query("subscriptions")
-      .withIndex("by_polarSubscriptionId", (q) =>
-        q.eq("polarSubscriptionId", args.polarSubscriptionId)
-      )
-      .first();
-
-    if (subscription) {
-      await ctx.db.patch(subscription._id, {
-        status: args.status,
-        cancelAtPeriodEnd: args.cancelAtPeriodEnd,
-      });
-    }
   },
 });

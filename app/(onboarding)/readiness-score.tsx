@@ -9,6 +9,7 @@ import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { getScoreColor, getScoreLabel } from '@/lib/utils';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 import { 
   TrendingUp, CheckCircle2, ListTodo, 
   Link2, Sparkles 
@@ -148,6 +149,11 @@ export default function ReadinessScoreScreen() {
         onClose={handleClosePopup}
         onSubscriptionComplete={handleSubscriptionComplete}
         userEmail={user?.email}
+        workspaceId={
+          typeof params.workspaceId === 'string'
+            ? (params.workspaceId as Id<'workspaces'>)
+            : undefined
+        }
       />
     </SafeArea>
   );

@@ -10,40 +10,37 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useQuery } from 'convex/react';
+import { useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import type { Id } from '@/convex/_generated/dataModel';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { Button } from './Button';
 import { Card } from './Card';
 import { Check, X, Zap, Crown, Building2, Sparkles } from 'lucide-react-native';
 
-const POLAR_CHECKOUT_URLS = {
-  starter: 'https://buy.polar.sh/polar_cl_Qtjc97ubZBq1csbnEfXarKXlJqK4K4hXDQV6z0yMUiZ',
-  professional: 'https://buy.polar.sh/polar_cl_vnIWQfLDvu6YhDhXBKrADFjv754ViPneOvKSH3z7Xmx',
-  enterprise: 'https://buy.polar.sh/polar_cl_IYULmfxKyw5mU5EURW9olA5LTK1kv5RcF9ehr22PzoI',
-} as const;
-
-type PlanId = keyof typeof POLAR_CHECKOUT_URLS;
+type PaidPlanId = 'starter' | 'professional' | 'enterprise';
 
 interface SubscriptionPopupProps {
   visible: boolean;
   onClose: () => void;
   onSubscriptionComplete: () => void;
   userEmail?: string;
+  workspaceId?: Id<'workspaces'>;
 }
 
 const plans = [
   {
     id: 'starter' as const,
     name: 'Starter',
-    price: 29,
+    price: 49,
     icon: Zap,
     popular: false,
     features: [
-      'Up to 5 team members',
-      '3 active workflows',
-      'Basic integrations',
+      'Up to 10 team members',
+      '10 active workflows',
+      '5 integrations',
+      'AI recommendations',
       'Email support',
       'Basic reports',
     ],
@@ -55,19 +52,20 @@ const plans = [
     icon: Crown,
     popular: true,
     features: [
-      'Up to 25 team members',
+      'Up to 50 team members',
       'Unlimited workflows',
       'All integrations',
+      'Advanced AI insights',
       'Priority support',
-      'Advanced reports',
-      'Custom workflows',
-      'Approval chains',
+      'Full reporting suite',
+      'Audit readiness tools',
+      'Custom workflow templates',
     ],
   },
   {
     id: 'enterprise' as const,
     name: 'Enterprise',
-    price: 499,
+    price: 399,
     icon: Building2,
     popular: false,
     features: [
@@ -80,6 +78,7 @@ const plans = [
       'SSO & SAML',
       'Audit logs',
       'API access',
+      'BAA included',
     ],
   },
 ];
@@ -89,13 +88,17 @@ export function SubscriptionPopup({
   onClose,
   onSubscriptionComplete,
   userEmail,
+  workspaceId,
 }: SubscriptionPopupProps) {
   const { isDark } = useTheme();
   const colors = useThemeColors();
   const styles = createStyles(colors, isDark);
-  const [selectedPlan, setSelectedPlan] = useState<PlanId>('professional');
+  const createPaddleCheckout = useAction(api.billing.createPaddleCheckout);
+  const [selectedPlan, setSelectedPlan] = useState<PaidPlanId>('professional');
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [paddleCheckoutUrl, setPaddleCheckoutUrl] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const handledSubscriptionRef = useRef(false);
 
   const subscription = useQuery(
@@ -108,6 +111,8 @@ export function SubscriptionPopup({
       handledSubscriptionRef.current = false;
       setCheckoutVisible(false);
       setCheckoutLoading(false);
+      setPaddleCheckoutUrl(null);
+      setCheckoutError(null);
       return;
     }
 
@@ -122,26 +127,41 @@ export function SubscriptionPopup({
     }
   }, [visible, subscription, onSubscriptionComplete]);
 
-  const checkoutUrl = (() => {
-    const baseUrl = POLAR_CHECKOUT_URLS[selectedPlan];
-    if (!userEmail) return baseUrl;
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}customer_email=${encodeURIComponent(userEmail)}`;
-  })();
-
-  const handleStartTrial = () => {
+  const handleStartCheckout = async () => {
+    setCheckoutError(null);
+    if (!workspaceId) {
+      setCheckoutError('Workspace not ready. Finish onboarding or open billing from Settings.');
+      return;
+    }
     setCheckoutLoading(true);
-    setCheckoutVisible(true);
+    try {
+      const result = await createPaddleCheckout({
+        workspaceId,
+        plan: selectedPlan,
+      });
+      if (!result.success) {
+        setCheckoutError(result.error);
+        return;
+      }
+      setPaddleCheckoutUrl(result.checkoutUrl);
+      setCheckoutVisible(true);
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : 'Checkout failed');
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const handleCloseMain = () => {
     setCheckoutVisible(false);
+    setPaddleCheckoutUrl(null);
     onClose();
   };
 
   const handleCloseCheckout = () => {
     setCheckoutVisible(false);
     setCheckoutLoading(false);
+    setPaddleCheckoutUrl(null);
   };
 
   const handleCheckoutSuccessCheck = () => {
@@ -172,9 +192,7 @@ export function SubscriptionPopup({
             <Text style={styles.checkoutSubtitle}>
               {subscription?.status === 'active' || subscription?.status === 'trialing'
                 ? 'Subscription active, taking you to the dashboard.'
-                : selectedPlan === 'starter'
-                  ? 'Complete checkout to start your 14-day free trial.'
-                  : 'Complete checkout to activate your subscription.'}
+                : 'Secure checkout powered by Paddle. Complete payment to activate your plan.'}
             </Text>
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={handleCloseCheckout}>
@@ -182,31 +200,38 @@ export function SubscriptionPopup({
           </TouchableOpacity>
         </View>
 
-        <WebView
-          style={styles.webView}
-          source={{ uri: checkoutUrl }}
-          onLoadEnd={() => setCheckoutLoading(false)}
-          onError={(event) => {
-            console.error('Polar checkout failed to load', event.nativeEvent);
-            setCheckoutLoading(false);
-          }}
-          onNavigationStateChange={(navState) => {
-            if (
-              navState.url.includes('success') ||
-              navState.url.includes('thank-you') ||
-              navState.url.includes('complete')
-            ) {
-              handleCheckoutSuccessCheck();
-            }
-          }}
-          startInLoadingState
-          renderLoading={() => (
-            <View style={styles.webViewLoading}>
-              <ActivityIndicator size="large" color={colors.primary[500]} />
-              <Text style={styles.checkoutLoadingText}>Loading checkout...</Text>
-            </View>
-          )}
-        />
+        {paddleCheckoutUrl ? (
+          <WebView
+            style={styles.webView}
+            source={{ uri: paddleCheckoutUrl }}
+            onLoadEnd={() => setCheckoutLoading(false)}
+            onError={(event) => {
+              console.error('Paddle checkout failed to load', event.nativeEvent);
+              setCheckoutLoading(false);
+            }}
+            onNavigationStateChange={(navState) => {
+              if (
+                navState.url.includes('success') ||
+                navState.url.includes('thank-you') ||
+                navState.url.includes('complete')
+              ) {
+                handleCheckoutSuccessCheck();
+              }
+            }}
+            startInLoadingState
+            renderLoading={() => (
+              <View style={styles.webViewLoading}>
+                <ActivityIndicator size="large" color={colors.primary[500]} />
+                <Text style={styles.checkoutLoadingText}>Loading checkout...</Text>
+              </View>
+            )}
+          />
+        ) : (
+          <View style={styles.webViewLoading}>
+            <ActivityIndicator size="large" color={colors.primary[500]} />
+            <Text style={styles.checkoutLoadingText}>Preparing checkout...</Text>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -227,7 +252,7 @@ export function SubscriptionPopup({
               </View>
               <Text style={styles.title}>Choose Your Plan</Text>
               <Text style={styles.subtitle}>
-                14-day free trial available on Starter plan. No credit card required.
+                Paid plans bill securely through Paddle. Trials and promotions follow your catalog setup in Paddle.
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseMain}>
@@ -261,7 +286,7 @@ export function SubscriptionPopup({
                     >
                       {plan.id === 'starter' && (
                         <View style={styles.trialBadge}>
-                          <Text style={styles.trialBadgeText}>14-day free trial</Text>
+                          <Text style={styles.trialBadgeText}>Optional trial</Text>
                         </View>
                       )}
                       {plan.popular && (
@@ -319,9 +344,7 @@ export function SubscriptionPopup({
             </View>
 
             <View style={styles.benefitsSection}>
-              <Text style={styles.benefitsTitle}>
-                {selectedPlan === 'starter' ? "What's included in your trial:" : "What's included:"}
-              </Text>
+              <Text style={styles.benefitsTitle}>What&apos;s included:</Text>
               <View style={styles.benefitsList}>
                 <BenefitItem colors={colors} text="Full access to all features" />
                 <BenefitItem colors={colors} text="Unlimited compliance workflows" />
@@ -334,11 +357,17 @@ export function SubscriptionPopup({
 
           <View style={styles.footer}>
             <Button
-              title={selectedPlan === 'starter' ? 'Start 14-day free trial' : 'Subscribe now'}
-              onPress={handleStartTrial}
+              title="Continue to checkout"
+              onPress={() => {
+                void handleStartCheckout();
+              }}
+              loading={checkoutLoading}
               fullWidth
               size="lg"
             />
+            {checkoutError ? (
+              <Text style={styles.checkoutError}>{checkoutError}</Text>
+            ) : null}
             <TouchableOpacity onPress={handleCloseMain} style={styles.skipButton}>
               <Text style={styles.skipButtonText}>Skip for now</Text>
             </TouchableOpacity>
@@ -593,6 +622,12 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
     color: colors.text.tertiary,
     textAlign: 'center',
     marginTop: spacing.sm,
+  },
+  checkoutError: {
+    fontSize: fontSize.sm,
+    color: colors.error[500],
+    textAlign: 'center',
+    marginTop: spacing.md,
   },
   skipButton: {
     alignItems: 'center',

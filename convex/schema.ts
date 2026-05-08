@@ -235,12 +235,12 @@ export default defineSchema({
     currentPeriodStart: v.number(),
     currentPeriodEnd: v.number(),
     cancelAtPeriodEnd: v.boolean(),
-    polarCustomerId: v.optional(v.string()),
-    polarSubscriptionId: v.optional(v.string()),
+    paddleCustomerId: v.optional(v.string()),
+    paddleSubscriptionId: v.optional(v.string()),
     customerEmail: v.optional(v.string()),
   })
     .index("by_workspace", ["workspaceId"])
-    .index("by_polarSubscriptionId", ["polarSubscriptionId"])
+    .index("by_paddleSubscriptionId", ["paddleSubscriptionId"])
     .index("by_customerEmail", ["customerEmail"]),
 
   complianceHistory: defineTable({
