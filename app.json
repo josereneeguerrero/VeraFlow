@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "VeraFlow",
+    "slug": "veraflow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "veraflow",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.veraflow.app"
+    },
+    "android": {
+      "package": "com.veraflow.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

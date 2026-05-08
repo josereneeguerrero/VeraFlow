@@ -1,0 +1,153 @@
+import React from 'react';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
+import { colors, borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+
+interface ButtonProps {
+  onPress: () => void;
+  title: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  loading?: boolean;
+  fullWidth?: boolean;
+  icon?: React.ReactNode;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+}
+
+export function Button({
+  onPress,
+  title,
+  variant = 'primary',
+  size = 'md',
+  disabled = false,
+  loading = false,
+  fullWidth = false,
+  icon,
+  style,
+  textStyle,
+}: ButtonProps) {
+  const isDisabled = disabled || loading;
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={isDisabled}
+      style={[
+        styles.base,
+        styles[variant],
+        styles[`size_${size}`],
+        fullWidth && styles.fullWidth,
+        isDisabled && styles.disabled,
+        style,
+      ]}
+      activeOpacity={0.8}
+    >
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={variant === 'primary' ? colors.white : colors.primary[500]}
+        />
+      ) : (
+        <>
+          {icon && <>{icon}</>}
+          <Text
+            style={[
+              styles.text,
+              styles[`text_${variant}`],
+              styles[`text_${size}`],
+              icon && styles.textWithIcon,
+              textStyle,
+            ]}
+          >
+            {title}
+          </Text>
+        </>
+      )}
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  base: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.md,
+  },
+  primary: {
+    backgroundColor: colors.primary[500],
+  },
+  secondary: {
+    backgroundColor: colors.gray[100],
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.gray[300],
+  },
+  ghost: {
+    backgroundColor: 'transparent',
+  },
+  danger: {
+    backgroundColor: colors.error[500],
+  },
+  size_sm: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    minHeight: 36,
+  },
+  size_md: {
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 44,
+  },
+  size_lg: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    minHeight: 52,
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  text: {
+    fontWeight: fontWeight.semibold,
+  },
+  text_primary: {
+    color: colors.white,
+  },
+  text_secondary: {
+    color: colors.gray[700],
+  },
+  text_outline: {
+    color: colors.gray[700],
+  },
+  text_ghost: {
+    color: colors.primary[500],
+  },
+  text_danger: {
+    color: colors.white,
+  },
+  text_sm: {
+    fontSize: fontSize.sm,
+  },
+  text_md: {
+    fontSize: fontSize.base,
+  },
+  text_lg: {
+    fontSize: fontSize.lg,
+  },
+  textWithIcon: {
+    marginLeft: spacing.sm,
+  },
+});
