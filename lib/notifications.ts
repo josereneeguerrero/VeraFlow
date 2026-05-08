@@ -1,15 +1,29 @@
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+type NotificationsModule = typeof import('expo-notifications');
+
+let notificationsModule: NotificationsModule | null = null;
+
+async function getNotificationsModule(): Promise<NotificationsModule> {
+  if (!notificationsModule) {
+    notificationsModule = await import('expo-notifications');
+    notificationsModule.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+  }
+
+  return notificationsModule;
+}
+
+function isExpoGo(): boolean {
+  return Constants.appOwnership === 'expo';
+}
 
 export interface PushNotificationState {
   token: string | null;
@@ -18,6 +32,13 @@ export interface PushNotificationState {
 
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   let token: string | null = null;
+
+  if (isExpoGo()) {
+    console.log('Push notifications are disabled in Expo Go. Use a development build.');
+    return null;
+  }
+
+  const Notifications = await getNotificationsModule();
 
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
@@ -64,23 +85,35 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 }
 
 export function addNotificationReceivedListener(
-  callback: (notification: Notifications.Notification) => void
-): Notifications.Subscription {
-  return Notifications.addNotificationReceivedListener(callback);
+  callback: (notification: import('expo-notifications').Notification) => void
+): Promise<import('expo-notifications').Subscription> {
+  return getNotificationsModule().then((Notifications) =>
+    Notifications.addNotificationReceivedListener(callback)
+  );
 }
 
 export function addNotificationResponseReceivedListener(
-  callback: (response: Notifications.NotificationResponse) => void
-): Notifications.Subscription {
-  return Notifications.addNotificationResponseReceivedListener(callback);
+  callback: (response: import('expo-notifications').NotificationResponse) => void
+): Promise<import('expo-notifications').Subscription> {
+  return getNotificationsModule().then((Notifications) =>
+    Notifications.addNotificationResponseReceivedListener(callback)
+  );
+}
+
+export async function removeNotificationSubscription(
+  subscription: import('expo-notifications').Subscription
+): Promise<void> {
+  const Notifications = await getNotificationsModule();
+  Notifications.removeNotificationSubscription(subscription);
 }
 
 export async function scheduleLocalNotification(
   title: string,
   body: string,
   data?: Record<string, any>,
-  trigger?: Notifications.NotificationTriggerInput
+  trigger?: import('expo-notifications').NotificationTriggerInput
 ): Promise<string> {
+  const Notifications = await getNotificationsModule();
   return await Notifications.scheduleNotificationAsync({
     content: {
       title,
@@ -93,18 +126,22 @@ export async function scheduleLocalNotification(
 }
 
 export async function cancelAllScheduledNotifications(): Promise<void> {
+  const Notifications = await getNotificationsModule();
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
 export async function getBadgeCount(): Promise<number> {
+  const Notifications = await getNotificationsModule();
   return await Notifications.getBadgeCountAsync();
 }
 
 export async function setBadgeCount(count: number): Promise<boolean> {
+  const Notifications = await getNotificationsModule();
   return await Notifications.setBadgeCountAsync(count);
 }
 
 export async function dismissAllNotifications(): Promise<void> {
+  const Notifications = await getNotificationsModule();
   await Notifications.dismissAllNotificationsAsync();
 }
 

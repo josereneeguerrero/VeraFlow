@@ -46,9 +46,7 @@ export default function SettingsScreen() {
     } catch (error) {
       console.log('Sign out error:', error);
     }
-    setTimeout(() => {
-      router.dismissAll();
-    }, 50);
+    router.replace('/(auth)/login');
   };
 
   const menuItems = [

@@ -34,9 +34,7 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
     } catch (error) {
       console.log('Sign out error:', error);
     }
-    setTimeout(() => {
-      router.dismissAll();
-    }, 50);
+    router.replace('/(auth)/login');
   };
 
   const handleNavigateToProfile = () => {

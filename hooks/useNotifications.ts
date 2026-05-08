@@ -1,26 +1,32 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation } from 'convex/react';
-import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { api } from '@/convex/_generated/api';
 import {
   registerForPushNotificationsAsync,
   addNotificationReceivedListener,
   addNotificationResponseReceivedListener,
+  removeNotificationSubscription,
 } from '@/lib/notifications';
+
+type Notification = import('expo-notifications').Notification;
+type NotificationResponse = import('expo-notifications').NotificationResponse;
+type Subscription = import('expo-notifications').Subscription;
 
 export function useNotifications() {
   const router = useRouter();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
-  const [notification, setNotification] = useState<Notifications.Notification | null>(null);
+  const [notification, setNotification] = useState<Notification | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'undetermined'>('undetermined');
-  
-  const notificationListener = useRef<Notifications.Subscription>();
-  const responseListener = useRef<Notifications.Subscription>();
+  const [isExpoGo] = useState(Constants.appOwnership === 'expo');
+
+  const notificationListener = useRef<Subscription | null>(null);
+  const responseListener = useRef<Subscription | null>(null);
   
   const savePushToken = useMutation(api.users.savePushToken);
 
-  const handleNotificationResponse = useCallback((response: Notifications.NotificationResponse) => {
+  const handleNotificationResponse = useCallback((response: NotificationResponse) => {
     const data = response.notification.request.content.data;
     
     if (data?.actionUrl) {
@@ -33,6 +39,11 @@ export function useNotifications() {
   }, [router]);
 
   const registerForNotifications = useCallback(async () => {
+    if (isExpoGo) {
+      setPermissionStatus('denied');
+      return null;
+    }
+
     const token = await registerForPushNotificationsAsync();
     
     if (token) {
@@ -49,26 +60,44 @@ export function useNotifications() {
     }
     
     return token;
-  }, [savePushToken]);
+  }, [isExpoGo, savePushToken]);
 
   useEffect(() => {
+    if (isExpoGo) {
+      return;
+    }
+
     registerForNotifications();
 
-    notificationListener.current = addNotificationReceivedListener((notification) => {
-      setNotification(notification);
+    let isMounted = true;
+
+    addNotificationReceivedListener((notification) => {
+      if (isMounted) {
+        setNotification(notification);
+      }
+    }).then((subscription) => {
+      if (isMounted) {
+        notificationListener.current = subscription;
+      }
     });
 
-    responseListener.current = addNotificationResponseReceivedListener(handleNotificationResponse);
+    addNotificationResponseReceivedListener(handleNotificationResponse).then((subscription) => {
+      if (isMounted) {
+        responseListener.current = subscription;
+      }
+    });
 
     return () => {
+      isMounted = false;
+
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        removeNotificationSubscription(notificationListener.current);
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        removeNotificationSubscription(responseListener.current);
       }
     };
-  }, [registerForNotifications, handleNotificationResponse]);
+  }, [isExpoGo, registerForNotifications, handleNotificationResponse]);
 
   return {
     expoPushToken,
