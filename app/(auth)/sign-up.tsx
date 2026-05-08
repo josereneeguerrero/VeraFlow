@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthActions } from '@convex-dev/auth/react';
-import { useMutation } from 'convex/react';
+import { useConvexAuth, useMutation } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button, Input, Divider } from '@/components/ui';
@@ -13,6 +13,7 @@ import { Mail, Lock, User } from 'lucide-react-native';
 export default function SignUpScreen() {
   const router = useRouter();
   const { signIn } = useAuthActions();
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const createProfile = useMutation(api.users.createProfile);
   
   const [name, setName] = useState('');
@@ -21,6 +22,7 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingProfile, setPendingProfile] = useState<{ name: string; email: string } | null>(null);
 
   const handleSignUp = async () => {
     setError('');
@@ -53,15 +55,42 @@ export default function SignUpScreen() {
         password,
         flow: 'signUp',
       });
-      
-      await createProfile({ name, email });
-      router.replace('/(onboarding)/workspace-setup');
+      setPendingProfile({ name, email });
     } catch (err: any) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
+  React.useEffect(() => {
+    if (!pendingProfile || loading || isLoading || !isAuthenticated) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const finalizeSignUp = async () => {
+      try {
+        await createProfile(pendingProfile);
+        if (!cancelled) {
+          setPendingProfile(null);
+          router.replace('/(onboarding)/workspace-setup');
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err.message || 'Failed to create account. Please try again.');
+          setPendingProfile(null);
+        }
+      }
+    };
+
+    void finalizeSignUp();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [createProfile, isAuthenticated, isLoading, loading, pendingProfile, router]);
 
   return (
     <SafeArea>

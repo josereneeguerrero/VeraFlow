@@ -1,11 +1,12 @@
 import React from 'react';
-import { SafeAreaView, View, StyleSheet, ViewStyle, StatusBar } from 'react-native';
+import { View, StyleSheet, ViewStyle, StatusBar } from 'react-native';
+import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { colors } from '@/lib/constants';
 
 interface SafeAreaProps {
   children: React.ReactNode;
   style?: ViewStyle;
-  edges?: ('top' | 'bottom' | 'left' | 'right')[];
+  edges?: Edge[];
   backgroundColor?: string;
 }
 
