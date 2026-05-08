@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthActions } from '@convex-dev/auth/react';
+import { useAuthActions, useConvexAuth } from '@convex-dev/auth/react';
 import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
@@ -14,6 +14,7 @@ import { Mail, Lock } from 'lucide-react-native';
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
   const { isDark } = useTheme();
   const colors = useThemeColors();
   const styles = createStyles(colors, isDark);
@@ -22,6 +23,23 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [checkingMfa, setCheckingMfa] = useState(false);
+
+  const mfaStatus = useQuery(
+    api.mfa.checkMfaRequired,
+    isAuthenticated && checkingMfa ? {} : 'skip'
+  );
+
+  useEffect(() => {
+    if (checkingMfa && mfaStatus) {
+      if (mfaStatus.required) {
+        router.replace('/(auth)/mfa-verify');
+      } else {
+        router.replace('/(tabs)');
+      }
+      setCheckingMfa(false);
+    }
+  }, [mfaStatus, checkingMfa]);
 
   const handleLogin = async () => {
     setError('');
@@ -42,10 +60,9 @@ export default function LoginScreen() {
         password,
         flow: 'signIn',
       });
-      router.replace('/(tabs)');
+      setCheckingMfa(true);
     } catch (err: any) {
       setError('Invalid email or password. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

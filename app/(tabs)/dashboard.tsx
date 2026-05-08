@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native
 import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea, PageHeader } from '@/components/layout';
-import { Card, ProgressBar, Badge, StatusBadge, OfflineBanner } from '@/components/ui';
+import { Card, ProgressBar, Badge, StatusBadge, OfflineBanner, ComplianceCalendar } from '@/components/ui';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
@@ -136,6 +136,11 @@ export default function DashboardScreen() {
             <Text style={statStyles.label}>Team Members</Text>
           </Card>
         </View>
+
+        {/* Compliance Calendar */}
+        {workspace && (
+          <ComplianceCalendar workspaceId={workspace._id} compact />
+        )}
 
         {/* Critical Items Alert */}
         {criticalRecommendations.length > 0 && (

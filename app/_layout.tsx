@@ -5,6 +5,7 @@ import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import { ConvexReactClient } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
 import { ThemeProvider, useTheme } from '@/lib/theme';
+import { OnboardingTourProvider } from '@/components/ui/OnboardingTour';
 
 const convex = new ConvexReactClient(
   process.env.EXPO_PUBLIC_CONVEX_URL as string,
@@ -46,7 +47,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <ConvexAuthProvider client={convex} storage={authStorage}>
-        <AppContent />
+        <OnboardingTourProvider>
+          <AppContent />
+        </OnboardingTourProvider>
       </ConvexAuthProvider>
     </ThemeProvider>
   );

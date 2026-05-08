@@ -20,6 +20,11 @@ export default defineSchema({
     currentWorkspaceId: v.optional(v.id("workspaces")),
     pushToken: v.optional(v.string()),
     notificationsEnabled: v.optional(v.boolean()),
+    // MFA fields
+    mfaEnabled: v.optional(v.boolean()),
+    mfaSecret: v.optional(v.string()),
+    mfaBackupCodes: v.optional(v.array(v.string())),
+    mfaVerifiedAt: v.optional(v.number()),
   }).index("by_userId", ["userId"]),
 
   workspaces: defineTable({
@@ -216,6 +221,7 @@ export default defineSchema({
   subscriptions: defineTable({
     workspaceId: v.id("workspaces"),
     plan: v.union(
+      v.literal("free"),
       v.literal("starter"),
       v.literal("professional"),
       v.literal("enterprise")
@@ -244,4 +250,95 @@ export default defineSchema({
   })
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_date", ["workspaceId", "recordedAt"]),
+
+  policies: defineTable({
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    description: v.string(),
+    category: v.string(),
+    version: v.string(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("pending_review"),
+      v.literal("approved"),
+      v.literal("archived")
+    ),
+    content: v.optional(v.string()),
+    documentId: v.optional(v.id("documents")),
+    effectiveDate: v.optional(v.number()),
+    expirationDate: v.optional(v.number()),
+    nextReviewDate: v.optional(v.number()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    approvedBy: v.optional(v.id("users")),
+    approvedAt: v.optional(v.number()),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_category", ["workspaceId", "category"])
+    .index("by_status", ["workspaceId", "status"]),
+
+  policyAcknowledgments: defineTable({
+    policyId: v.id("policies"),
+    userId: v.id("users"),
+    acknowledgedAt: v.number(),
+    version: v.string(),
+  })
+    .index("by_policy", ["policyId"])
+    .index("by_user", ["userId"])
+    .index("by_policy_user", ["policyId", "userId"]),
+
+  policyVersions: defineTable({
+    policyId: v.id("policies"),
+    version: v.string(),
+    content: v.optional(v.string()),
+    documentId: v.optional(v.id("documents")),
+    changes: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_policy", ["policyId"]),
+
+  trainingCourses: defineTable({
+    workspaceId: v.id("workspaces"),
+    name: v.string(),
+    description: v.string(),
+    category: v.string(),
+    duration: v.string(),
+    content: v.optional(v.string()),
+    documentId: v.optional(v.id("documents")),
+    passingScore: v.number(),
+    isRequired: v.boolean(),
+    status: v.union(v.literal("active"), v.literal("archived")),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_status", ["workspaceId", "status"]),
+
+  trainingAssignments: defineTable({
+    courseId: v.id("trainingCourses"),
+    userId: v.id("users"),
+    workspaceId: v.id("workspaces"),
+    assignedBy: v.id("users"),
+    assignedAt: v.number(),
+    dueDate: v.optional(v.number()),
+    status: v.union(
+      v.literal("assigned"),
+      v.literal("in_progress"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("expired")
+    ),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    score: v.optional(v.number()),
+    attempts: v.number(),
+    certificateId: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_course", ["courseId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user_status", ["userId", "status"]),
 });

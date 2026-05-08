@@ -36,10 +36,10 @@ export const create = mutation({
 
     await ctx.db.insert("subscriptions", {
       workspaceId,
-      plan: "starter",
-      status: "trialing",
+      plan: "free",
+      status: "active",
       currentPeriodStart: Date.now(),
-      currentPeriodEnd: Date.now() + 14 * 24 * 60 * 60 * 1000,
+      currentPeriodEnd: Date.now() + 365 * 24 * 60 * 60 * 1000,
       cancelAtPeriodEnd: false,
     });
 

@@ -12,7 +12,7 @@ import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { 
   User, Building2, Link, Users, FileText, FolderOpen,
   CreditCard, Bell, HelpCircle, LogOut, ChevronRight,
-  CloudOff, RefreshCw, Wifi, WifiOff
+  CloudOff, RefreshCw, Wifi, WifiOff, Shield
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
@@ -61,6 +61,13 @@ export default function SettingsScreen() {
           route: '/(tabs)/settings/account',
         },
         {
+          icon: Shield,
+          label: 'Security',
+          description: 'Two-factor authentication & security',
+          route: '/(tabs)/settings/security',
+          badge: 'HIPAA',
+        },
+        {
           icon: Bell,
           label: 'Notifications',
           description: 'Configure notification preferences',
@@ -93,8 +100,21 @@ export default function SettingsScreen() {
       ],
     },
     {
-      section: 'Data',
+      section: 'Compliance',
       items: [
+        {
+          icon: FileText,
+          label: 'Policies',
+          description: 'Manage compliance policies',
+          route: '/(tabs)/policies',
+        },
+        {
+          icon: Users,
+          label: 'Training',
+          description: 'Manage team training',
+          route: '/(tabs)/training',
+          badge: 'New',
+        },
         {
           icon: FolderOpen,
           label: 'Documents',

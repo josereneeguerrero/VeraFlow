@@ -1,16 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Card, Button, Avatar, Badge, ProgressBar, AccountDropdown, OfflineBanner } from '@/components/ui';
+import { useOnboardingTour, TourTriggerButton } from '@/components/ui/OnboardingTour';
 import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime, getScoreColor } from '@/lib/utils';
 import { 
   Bell, ChevronRight, AlertCircle, CheckCircle,
-  Clock, ArrowUpRight, Sparkles, Search
+  Clock, ArrowUpRight, Sparkles, Search, HelpCircle
 } from 'lucide-react-native';
 
 export default function HomeScreen() {
@@ -18,6 +19,7 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const styles = createStyles(colors);
   const quickStyles = createQuickStyles(colors);
+  const { startTour, isActive } = useOnboardingTour();
   
   const user = useQuery(api.users.getCurrentUser);
   const workspace = useQuery(api.workspaces.getCurrent);
@@ -35,6 +37,17 @@ export default function HomeScreen() {
   );
 
   const [refreshing, setRefreshing] = React.useState(false);
+  const [tourShown, setTourShown] = React.useState(false);
+
+  useEffect(() => {
+    if (user && !user.onboardingCompleted && !tourShown && !isActive) {
+      setTourShown(true);
+      const timer = setTimeout(() => {
+        startTour();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, tourShown, isActive, startTour]);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);

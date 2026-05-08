@@ -81,6 +81,18 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="policies"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="training"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

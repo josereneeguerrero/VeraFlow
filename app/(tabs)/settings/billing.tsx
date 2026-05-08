@@ -8,7 +8,7 @@ import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
 import { useTheme, useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatDate } from '@/lib/utils';
-import { Check, Crown, Zap, Building2 } from 'lucide-react-native';
+import { Check, Crown, Zap, Building2, Gift, Star } from 'lucide-react-native';
 
 export default function BillingScreen() {
   const router = useRouter();
@@ -44,6 +44,7 @@ export default function BillingScreen() {
 
   const getPlanIcon = (planId: string) => {
     switch (planId) {
+      case 'free': return Gift;
       case 'starter': return Zap;
       case 'professional': return Crown;
       case 'enterprise': return Building2;
@@ -65,12 +66,12 @@ export default function BillingScreen() {
               variant={currentPlan?.status === 'trialing' ? 'warning' : 'success'} 
             />
           </View>
-          <Text style={styles.planName}>{currentPlan?.name || 'Starter'}</Text>
+          <Text style={styles.planName}>{currentPlan?.name || 'Free'}</Text>
           <Text style={styles.planPrice}>
-            ${currentPlan?.price || 29}
-            <Text style={styles.planPeriod}>/month</Text>
+            {(currentPlan?.price || 0) === 0 ? 'Free' : `$${currentPlan?.price || 0}`}
+            {(currentPlan?.price || 0) > 0 && <Text style={styles.planPeriod}>/month</Text>}
           </Text>
-          {currentPlan?.currentPeriodEnd && (
+          {currentPlan?.currentPeriodEnd && (currentPlan?.price || 0) > 0 && (
             <Text style={styles.renewDate}>
               {currentPlan.status === 'trialing' ? 'Trial ends' : 'Renews'}{' '}
               {formatDate(currentPlan.currentPeriodEnd)}
@@ -113,12 +114,23 @@ export default function BillingScreen() {
           {plans?.map((plan: any) => {
             const Icon = getPlanIcon(plan.id);
             const isCurrent = currentPlan?.plan === plan.id;
+            const isPopular = plan.highlight || plan.id === 'professional';
             
             return (
               <Card 
                 key={plan.id} 
-                style={[styles.planCard, isCurrent && styles.planCardCurrent]}
+                style={[
+                  styles.planCard, 
+                  isCurrent && styles.planCardCurrent,
+                  isPopular && !isCurrent && styles.planCardPopular
+                ]}
               >
+                {isPopular && !isCurrent && (
+                  <View style={styles.popularBadge}>
+                    <Star size={12} color={colors.white} />
+                    <Text style={styles.popularText}>Most Popular</Text>
+                  </View>
+                )}
                 <View style={styles.planCardHeader}>
                   <View style={[
                     styles.planIcon,
@@ -129,14 +141,15 @@ export default function BillingScreen() {
                   <View style={styles.planInfo}>
                     <Text style={styles.planCardName}>{plan.name}</Text>
                     <Text style={styles.planCardPrice}>
-                      ${plan.price}<Text style={styles.planPeriodSmall}>/mo</Text>
+                      {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                      {plan.price > 0 && <Text style={styles.planPeriodSmall}>/mo</Text>}
                     </Text>
                   </View>
                   {isCurrent && <Badge label="Current" variant="success" size="sm" />}
                 </View>
 
                 <View style={styles.features}>
-                  {plan.features.slice(0, 5).map((feature: string, index: number) => (
+                  {plan.features.map((feature: string, index: number) => (
                     <View key={index} style={styles.featureItem}>
                       <Check size={16} color={colors.success[500]} />
                       <Text style={styles.featureText}>{feature}</Text>
@@ -146,10 +159,10 @@ export default function BillingScreen() {
 
                 {!isCurrent && (
                   <Button
-                    title={plan.price > (currentPlan?.price || 0) ? 'Upgrade' : 'Switch'}
+                    title={plan.price === 0 ? 'Downgrade' : plan.price > (currentPlan?.price || 0) ? 'Upgrade' : 'Switch'}
                     onPress={() => handleUpgrade(plan.id)}
                     loading={upgrading === plan.id}
-                    variant={plan.id === 'professional' ? 'primary' : 'outline'}
+                    variant={isPopular ? 'primary' : 'outline'}
                     fullWidth
                   />
                 )}
@@ -269,6 +282,27 @@ const createStyles = (colors: ThemeColors, isDark: boolean) => StyleSheet.create
   planCardCurrent: {
     borderWidth: 2,
     borderColor: colors.primary[500],
+  },
+  planCardPopular: {
+    borderWidth: 2,
+    borderColor: colors.primary[400],
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -12,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary[500],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  popularText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.white,
   },
   planCardHeader: {
     flexDirection: 'row',

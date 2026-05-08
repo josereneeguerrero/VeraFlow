@@ -70,6 +70,7 @@ export default function IntegrationsScreen() {
             <Text style={styles.sectionTitle}>Connected</Text>
             {connectedIntegrations.map((integration: any) => {
               const Icon = getIcon(integration.icon);
+              const isSlack = integration.provider === 'slack';
               return (
                 <Card key={integration.provider} style={styles.integrationCard}>
                   <View style={styles.integrationHeader}>
@@ -92,22 +93,34 @@ export default function IntegrationsScreen() {
                   )}
                   
                   <View style={styles.integrationActions}>
-                    <TouchableOpacity 
-                      style={styles.actionButton}
-                      onPress={() => handleSync(integration._id)}
-                    >
-                      <RefreshCw size={16} color={colors.primary[500]} />
-                      <Text style={styles.actionText}>Sync Now</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={styles.actionButton}
-                      onPress={() => handleDisconnect(integration._id)}
-                    >
-                      <AlertCircle size={16} color={colors.error[500]} />
-                      <Text style={[styles.actionText, styles.disconnectText]}>
-                        Disconnect
-                      </Text>
-                    </TouchableOpacity>
+                    {isSlack ? (
+                      <TouchableOpacity 
+                        style={styles.actionButton}
+                        onPress={() => router.push('/(tabs)/settings/slack-setup')}
+                      >
+                        <RefreshCw size={16} color={colors.primary[500]} />
+                        <Text style={styles.actionText}>Configure</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <>
+                        <TouchableOpacity 
+                          style={styles.actionButton}
+                          onPress={() => handleSync(integration._id)}
+                        >
+                          <RefreshCw size={16} color={colors.primary[500]} />
+                          <Text style={styles.actionText}>Sync Now</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.actionButton}
+                          onPress={() => handleDisconnect(integration._id)}
+                        >
+                          <AlertCircle size={16} color={colors.error[500]} />
+                          <Text style={[styles.actionText, styles.disconnectText]}>
+                            Disconnect
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 </Card>
               );
@@ -120,6 +133,7 @@ export default function IntegrationsScreen() {
           <Text style={styles.sectionTitle}>Available Integrations</Text>
           {availableIntegrations.map((integration: any) => {
             const Icon = getIcon(integration.icon);
+            const isSlack = integration.provider === 'slack';
             return (
               <Card key={integration.provider} style={styles.integrationCard}>
                 <View style={styles.integrationHeader}>
@@ -134,8 +148,14 @@ export default function IntegrationsScreen() {
                   </View>
                 </View>
                 <Button
-                  title="Connect"
-                  onPress={() => handleConnect(integration.provider)}
+                  title={isSlack ? "Configure" : "Connect"}
+                  onPress={() => {
+                    if (isSlack) {
+                      router.push('/(tabs)/settings/slack-setup');
+                    } else {
+                      handleConnect(integration.provider);
+                    }
+                  }}
                   variant="outline"
                   size="sm"
                   style={styles.connectButton}

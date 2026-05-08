@@ -47,6 +47,30 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#3B5BDB',
     });
+
+    await Notifications.setNotificationChannelAsync('approvals', {
+      name: 'Approvals',
+      description: 'Notifications for approval requests',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#3B82F6',
+    });
+
+    await Notifications.setNotificationChannelAsync('deadlines', {
+      name: 'Deadlines',
+      description: 'Deadline reminders',
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#F59E0B',
+    });
+
+    await Notifications.setNotificationChannelAsync('policies', {
+      name: 'Policies',
+      description: 'Policy acknowledgment reminders',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#10B981',
+    });
   }
 
   if (!Device.isDevice) {

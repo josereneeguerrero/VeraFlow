@@ -3,43 +3,64 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 const plans = {
+  free: {
+    name: "Free",
+    price: 0,
+    features: [
+      "1 workspace",
+      "Up to 2 team members",
+      "3 active workflows",
+      "Basic compliance score",
+      "Community support",
+    ],
+    limits: {
+      teamMembers: 2,
+      workflows: 3,
+      integrations: 1,
+    },
+    highlight: false,
+  },
   starter: {
     name: "Starter",
-    price: 29,
+    price: 49,
     features: [
-      "Up to 5 team members",
-      "3 active workflows",
-      "Basic integrations",
+      "Up to 10 team members",
+      "10 active workflows",
+      "5 integrations",
+      "AI recommendations",
       "Email support",
       "Basic reports",
     ],
     limits: {
-      teamMembers: 5,
-      workflows: 3,
-      integrations: 2,
+      teamMembers: 10,
+      workflows: 10,
+      integrations: 5,
     },
+    highlight: false,
   },
   professional: {
     name: "Professional",
     price: 149,
     features: [
-      "Up to 25 team members",
+      "Up to 50 team members",
       "Unlimited workflows",
       "All integrations",
+      "Advanced AI insights",
       "Priority support",
-      "Advanced reports",
-      "Custom workflows",
-      "Approval chains",
+      "Full reporting suite",
+      "Audit readiness tools",
+      "Custom workflow templates",
     ],
     limits: {
-      teamMembers: 25,
+      teamMembers: 50,
       workflows: -1,
       integrations: -1,
     },
+    highlight: true,
   },
   enterprise: {
     name: "Enterprise",
-    price: 499,
+    price: 399,
     features: [
       "Unlimited team members",
       "Unlimited workflows",
@@ -50,12 +71,14 @@ const plans = {
       "SSO & SAML",
       "Audit logs",
       "API access",
+      "BAA included",
     ],
     limits: {
       teamMembers: -1,
       workflows: -1,
       integrations: -1,
     },
+    highlight: false,
   },
 };
 
@@ -82,10 +105,10 @@ export const getCurrentPlan = query({
 
     if (!subscription) {
       return {
-        plan: "starter",
-        ...plans.starter,
-        status: "trialing",
-        currentPeriodEnd: Date.now() + 14 * 24 * 60 * 60 * 1000,
+        plan: "free",
+        ...plans.free,
+        status: "active",
+        currentPeriodEnd: null,
       };
     }
 
@@ -134,6 +157,7 @@ export const upgrade = mutation({
   args: {
     workspaceId: v.id("workspaces"),
     plan: v.union(
+      v.literal("free"),
       v.literal("starter"),
       v.literal("professional"),
       v.literal("enterprise")
@@ -241,6 +265,7 @@ export const upsertSubscriptionFromPolar = internalMutation({
       v.literal("trialing")
     ),
     plan: v.union(
+      v.literal("free"),
       v.literal("starter"),
       v.literal("professional"),
       v.literal("enterprise")
@@ -327,6 +352,62 @@ export const upsertSubscriptionFromPolar = internalMutation({
       currentPeriodEnd: args.currentPeriodEnd,
       cancelAtPeriodEnd: args.cancelAtPeriodEnd,
     });
+  },
+});
+
+export const checkPlanLimits = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .first();
+
+    const planKey = subscription?.plan || "free";
+    const planDetails = plans[planKey as keyof typeof plans];
+
+    const members = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    const workflows = await ctx.db
+      .query("workflows")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    const integrations = await ctx.db
+      .query("integrations")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .filter((q) => q.eq(q.field("status"), "connected"))
+      .collect();
+
+    const limits = planDetails.limits;
+
+    return {
+      plan: planKey,
+      planName: planDetails.name,
+      teamMembers: {
+        current: members.length,
+        limit: limits.teamMembers,
+        canAdd: limits.teamMembers === -1 || members.length < limits.teamMembers,
+      },
+      workflows: {
+        current: workflows.length,
+        limit: limits.workflows,
+        canAdd: limits.workflows === -1 || workflows.length < limits.workflows,
+      },
+      integrations: {
+        current: integrations.length,
+        limit: limits.integrations,
+        canAdd: limits.integrations === -1 || integrations.length < limits.integrations,
+      },
+    };
   },
 });
 

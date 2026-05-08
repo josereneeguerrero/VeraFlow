@@ -11,3 +11,5 @@ export { DocumentPicker } from './DocumentPicker';
 export { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 export { AccountDropdown } from './AccountDropdown';
 export { SubscriptionPopup } from './SubscriptionPopup';
+export { OnboardingTourProvider, useOnboardingTour, TourTriggerButton } from './OnboardingTour';
+export { ComplianceCalendar } from './ComplianceCalendar';
