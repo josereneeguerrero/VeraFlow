@@ -52,6 +52,8 @@ export default function ReadinessScoreScreen() {
 
   const handleClosePopup = () => {
     setShowSubscriptionPopup(false);
+    reset();
+    router.replace('/(tabs)');
   };
 
   const scoreColor = getScoreColor(score);

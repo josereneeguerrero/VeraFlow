@@ -176,14 +176,8 @@ export function SubscriptionPopup({
           </TouchableOpacity>
         </View>
 
-        {checkoutLoading && (
-          <View style={styles.checkoutLoading}>
-            <ActivityIndicator size="large" color={colors.primary[500]} />
-            <Text style={styles.checkoutLoadingText}>Loading checkout...</Text>
-          </View>
-        )}
-
         <WebView
+          style={styles.webView}
           source={{ uri: checkoutUrl }}
           onLoadEnd={() => setCheckoutLoading(false)}
           onError={(event) => {
@@ -201,7 +195,7 @@ export function SubscriptionPopup({
           }}
           startInLoadingState
           renderLoading={() => (
-            <View style={styles.checkoutLoading}>
+            <View style={styles.webViewLoading}>
               <ActivityIndicator size="large" color={colors.primary[500]} />
               <Text style={styles.checkoutLoadingText}>Loading checkout...</Text>
             </View>
@@ -225,9 +219,9 @@ export function SubscriptionPopup({
               <View style={styles.iconContainer}>
                 <Sparkles size={24} color={colors.primary[500]} />
               </View>
-              <Text style={styles.title}>Start Your Free Trial</Text>
+              <Text style={styles.title}>Choose Your Plan</Text>
               <Text style={styles.subtitle}>
-                Try VeraFlow free for 14 days. No credit card required.
+                14-day free trial available on Starter plan. No credit card required.
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={handleCloseMain}>
@@ -258,6 +252,11 @@ export function SubscriptionPopup({
                         plan.popular && styles.planCardPopular,
                       ]}
                     >
+                      {plan.id === 'starter' && (
+                        <View style={styles.trialBadge}>
+                          <Text style={styles.trialBadgeText}>14-day free trial</Text>
+                        </View>
+                      )}
                       {plan.popular && (
                         <View style={styles.popularBadge}>
                           <Text style={styles.popularText}>Most Popular</Text>
@@ -326,13 +325,16 @@ export function SubscriptionPopup({
 
           <View style={styles.footer}>
             <Button
-              title="Sign up or Start free trial"
+              title={selectedPlan === 'starter' ? 'Start 14-day free trial' : 'Subscribe now'}
               onPress={handleStartTrial}
               fullWidth
               size="lg"
             />
+            <TouchableOpacity onPress={handleCloseMain} style={styles.skipButton}>
+              <Text style={styles.skipButtonText}>Skip for now</Text>
+            </TouchableOpacity>
             <Text style={styles.footerText}>
-              By starting your trial, you agree to our Terms of Service and Privacy Policy
+              By continuing, you agree to our Terms of Service and Privacy Policy
             </Text>
           </View>
         </View>
@@ -383,11 +385,6 @@ const styles = StyleSheet.create({
   checkoutSubtitle: {
     fontSize: fontSize.base,
     color: colors.gray[500],
-  },
-  checkoutLoading: {
-    paddingVertical: spacing['3xl'],
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   checkoutLoadingText: {
     marginTop: spacing.md,
@@ -452,6 +449,20 @@ const styles = StyleSheet.create({
   planCardPopular: {
     borderWidth: 2,
     borderColor: colors.primary[200],
+  },
+  trialBadge: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    backgroundColor: colors.success[500],
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderBottomRightRadius: borderRadius.md,
+  },
+  trialBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.white,
   },
   popularBadge: {
     position: 'absolute',
@@ -572,9 +583,28 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     color: colors.gray[400],
     textAlign: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
+  },
+  skipButton: {
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+  },
+  skipButtonText: {
+    fontSize: fontSize.sm,
+    color: colors.gray[500],
+    fontWeight: fontWeight.medium,
   },
   webView: {
     flex: 1,
+  },
+  webViewLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.background,
   },
 });

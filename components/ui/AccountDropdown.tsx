@@ -31,10 +31,12 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
     setIsSigningOut(true);
     try {
       await signOut();
+      router.replace('/');
     } catch (error) {
       console.log('Sign out error:', error);
+    } finally {
+      setIsSigningOut(false);
     }
-    router.dismissAll();
   };
 
   const handleNavigateToProfile = () => {
