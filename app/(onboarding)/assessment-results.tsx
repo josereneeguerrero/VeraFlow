@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { useMutation } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Button, Card } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { api } from '@/convex/_generated/api';
 import { CheckCircle, AlertCircle, ArrowRight } from 'lucide-react-native';
@@ -30,7 +31,8 @@ export default function AssessmentResultsScreen() {
   const [score, setScore] = useState(0);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
-
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   useEffect(() => {
     setupWorkspace();
   }, []);
@@ -157,16 +159,19 @@ export default function AssessmentResultsScreen() {
           <Text style={styles.sectionTitle}>What's Next</Text>
           <View style={styles.nextSteps}>
             <NextStepItem
+              colors={colors}
               icon={<CheckCircle size={20} color={colors.success[500]} />}
               title="Review your readiness score"
               description="Understand your current compliance status"
             />
             <NextStepItem
+              colors={colors}
               icon={<AlertCircle size={20} color={colors.warning[500]} />}
               title="Check recommendations"
               description="See personalized action items"
             />
             <NextStepItem
+              colors={colors}
               icon={<ArrowRight size={20} color={colors.primary[500]} />}
               title="Start your first workflow"
               description="Begin improving compliance step by step"
@@ -191,25 +196,30 @@ function NextStepItem({
   icon,
   title,
   description,
+  colors,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  colors: ThemeColors;
 }) {
+  const styles = createStepStyles(colors);
+
   return (
-    <View style={stepStyles.container}>
-      <View style={stepStyles.icon}>{icon}</View>
-      <View style={stepStyles.content}>
-        <Text style={stepStyles.title}>{title}</Text>
-        <Text style={stepStyles.description}>{description}</Text>
+    <View style={styles.container}>
+      <View style={styles.icon}>{icon}</View>
+      <View style={styles.content}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -239,13 +249,13 @@ const styles = StyleSheet.create({
   loadingTitle: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
   loadingSubtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -254,7 +264,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -265,7 +275,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   header: {
     alignItems: 'center',
@@ -278,7 +288,7 @@ const styles = StyleSheet.create({
     borderWidth: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     marginBottom: spacing.lg,
   },
   scoreValue: {
@@ -287,12 +297,12 @@ const styles = StyleSheet.create({
   },
   scoreLabel: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   categoryBadge: {
@@ -310,18 +320,18 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   summaryText: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     lineHeight: 22,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   workspaceCard: {
@@ -330,7 +340,7 @@ const styles = StyleSheet.create({
   workspaceName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   workspaceDetails: {
@@ -339,11 +349,11 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   detailDivider: {
     marginHorizontal: spacing.sm,
-    color: colors.gray[300],
+    color: colors.text.tertiary,
   },
   nextSteps: {
     marginBottom: spacing.xl,
@@ -354,7 +364,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const stepStyles = StyleSheet.create({
+const createStepStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -373,11 +383,11 @@ const stepStyles = StyleSheet.create({
   title: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   description: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
 });

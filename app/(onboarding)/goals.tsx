@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { 
   Shield, FileCheck, Users, Clock, 
@@ -60,6 +61,8 @@ export default function GoalsScreen() {
   const router = useRouter();
   const { goals, setGoals, setStep } = useOnboardingStore();
   const [selected, setSelected] = useState<string[]>(goals);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const toggleGoal = (goalId: string) => {
     setSelected((prev) =>
@@ -114,7 +117,7 @@ export default function GoalsScreen() {
                   styles.iconContainer,
                   isSelected && styles.iconContainerSelected,
                 ]}>
-                  <Icon size={24} color={isSelected ? colors.primary[500] : colors.gray[400]} />
+                  <Icon size={24} color={isSelected ? colors.primary[500] : colors.text.tertiary} />
                 </View>
                 <View style={styles.optionContent}>
                   <Text style={[
@@ -129,7 +132,7 @@ export default function GoalsScreen() {
                   styles.checkbox,
                   isSelected && styles.checkboxSelected,
                 ]}>
-                  {isSelected && <Check size={16} color={colors.white} />}
+                  {isSelected && <Check size={16} color="#FFFFFF" />}
                 </View>
               </TouchableOpacity>
             );
@@ -153,9 +156,10 @@ export default function GoalsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -165,7 +169,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -176,17 +180,17 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing['2xl'],
     lineHeight: 24,
   },
@@ -197,10 +201,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
     marginBottom: spacing.md,
   },
   optionCardSelected: {
@@ -211,7 +215,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -225,7 +229,7 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   optionTitleSelected: {
@@ -233,14 +237,14 @@ const styles = StyleSheet.create({
   },
   optionDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   checkbox: {
     width: 24,
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: colors.gray[300],
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.md,
@@ -254,7 +258,7 @@ const styles = StyleSheet.create({
   },
   selectedCount: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: spacing.md,
   },

@@ -12,7 +12,8 @@ import {
 import { WebView } from 'react-native-webview';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { Button } from './Button';
 import { Card } from './Card';
 import { Check, X, Zap, Crown, Building2, Sparkles } from 'lucide-react-native';
@@ -89,6 +90,8 @@ export function SubscriptionPopup({
   onSubscriptionComplete,
   userEmail,
 }: SubscriptionPopupProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const [selectedPlan, setSelectedPlan] = useState<PlanId>('professional');
   const [checkoutVisible, setCheckoutVisible] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -319,11 +322,11 @@ export function SubscriptionPopup({
                 {selectedPlan === 'starter' ? "What's included in your trial:" : "What's included:"}
               </Text>
               <View style={styles.benefitsList}>
-                <BenefitItem text="Full access to all features" />
-                <BenefitItem text="Unlimited compliance workflows" />
-                <BenefitItem text="AI-powered recommendations" />
-                <BenefitItem text="Team collaboration tools" />
-                <BenefitItem text="Cancel anytime, no questions asked" />
+                <BenefitItem colors={colors} text="Full access to all features" />
+                <BenefitItem colors={colors} text="Unlimited compliance workflows" />
+                <BenefitItem colors={colors} text="AI-powered recommendations" />
+                <BenefitItem colors={colors} text="Team collaboration tools" />
+                <BenefitItem colors={colors} text="Cancel anytime, no questions asked" />
               </View>
             </View>
           </ScrollView>
@@ -350,7 +353,9 @@ export function SubscriptionPopup({
   );
 }
 
-function BenefitItem({ text }: { text: string }) {
+function BenefitItem({ text, colors }: { text: string; colors: ThemeColors }) {
+  const styles = createBenefitStyles(colors);
+
   return (
     <View style={styles.benefitItem}>
       <Check size={16} color={colors.success[500]} />
@@ -359,7 +364,7 @@ function BenefitItem({ text }: { text: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -375,7 +380,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     paddingTop: Platform.OS === 'ios' ? spacing['3xl'] : spacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   checkoutHeaderText: {
     flex: 1,
@@ -384,17 +389,17 @@ const styles = StyleSheet.create({
   checkoutTitle: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   checkoutSubtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   checkoutLoadingText: {
     marginTop: spacing.md,
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   header: {
     flexDirection: 'row',
@@ -403,7 +408,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     paddingTop: Platform.OS === 'ios' ? spacing['3xl'] : spacing.xl,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flex: 1,
@@ -420,12 +425,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   closeButton: {
     padding: spacing.sm,
@@ -470,7 +475,7 @@ const styles = StyleSheet.create({
   trialBadgeText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.white,
+    color: '#FFFFFF',
   },
   popularBadge: {
     position: 'absolute',
@@ -484,7 +489,7 @@ const styles = StyleSheet.create({
   popularText: {
     fontSize: fontSize.xs,
     fontWeight: fontWeight.semibold,
-    color: colors.white,
+    color: '#FFFFFF',
   },
   planHeader: {
     flexDirection: 'row',
@@ -509,24 +514,24 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   planPrice: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.bold,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   planPeriod: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.normal,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   radioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.gray[300],
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -549,7 +554,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   moreFeatures: {
     fontSize: fontSize.sm,
@@ -558,38 +563,29 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   benefitsSection: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
   },
   benefitsTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   benefitsList: {
     gap: spacing.sm,
   },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  benefitText: {
-    fontSize: fontSize.sm,
-    color: colors.gray[600],
-  },
   footer: {
     padding: spacing.xl,
     paddingBottom: Platform.OS === 'ios' ? spacing['2xl'] : spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: colors.gray[100],
-    backgroundColor: colors.white,
+    borderTopColor: colors.border,
+    backgroundColor: colors.card.background,
   },
   footerText: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     textAlign: 'center',
     marginTop: spacing.sm,
   },
@@ -599,7 +595,7 @@ const styles = StyleSheet.create({
   },
   skipButtonText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     fontWeight: fontWeight.medium,
   },
   webView: {
@@ -614,5 +610,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
+  },
+});
+
+const createBenefitStyles = (colors: ThemeColors) => StyleSheet.create({
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  benefitText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
   },
 });

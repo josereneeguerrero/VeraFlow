@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } fr
 import { useRouter } from 'expo-router';
 import { SafeArea } from '@/components/layout';
 import { Button, Input, Card } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { Building2 } from 'lucide-react-native';
 
@@ -12,6 +13,8 @@ export default function WorkspaceSetupScreen() {
   const { workspaceName, setWorkspaceName, setStep } = useOnboardingStore();
   const [name, setName] = useState(workspaceName);
   const [error, setError] = useState('');
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const handleContinue = () => {
     if (!name.trim()) {
@@ -79,7 +82,7 @@ export default function WorkspaceSetupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
@@ -95,7 +98,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   header: {
     alignItems: 'center',
@@ -115,7 +118,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     backgroundColor: colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
@@ -124,13 +127,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: 24,
   },

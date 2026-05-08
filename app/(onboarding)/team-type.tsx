@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { Stethoscope, Briefcase, Users, Check } from 'lucide-react-native';
 
@@ -33,6 +34,8 @@ export default function TeamTypeScreen() {
   const router = useRouter();
   const { teamType, setTeamType, setStep } = useOnboardingStore();
   const [selected, setSelected] = useState(teamType);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const handleContinue = () => {
     if (!selected) return;
@@ -79,7 +82,7 @@ export default function TeamTypeScreen() {
                   styles.iconContainer,
                   isSelected && styles.iconContainerSelected,
                 ]}>
-                  <Icon size={28} color={isSelected ? colors.primary[500] : colors.gray[400]} />
+                  <Icon size={28} color={isSelected ? colors.primary[500] : colors.text.tertiary} />
                 </View>
                 <View style={styles.optionContent}>
                   <Text style={[
@@ -114,9 +117,10 @@ export default function TeamTypeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -127,7 +131,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -138,17 +142,17 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing['2xl'],
     lineHeight: 24,
   },
@@ -159,10 +163,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
     marginBottom: spacing.md,
   },
   optionCardSelected: {
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.lg,
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   optionTitleSelected: {
@@ -195,7 +199,7 @@ const styles = StyleSheet.create({
   },
   optionDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   checkIcon: {
     marginLeft: spacing.md,

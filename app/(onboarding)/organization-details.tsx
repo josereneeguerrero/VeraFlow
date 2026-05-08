@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button, Card } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { Building, Users, MapPin, Check } from 'lucide-react-native';
 
@@ -33,6 +34,8 @@ export default function OrganizationDetailsScreen() {
   
   const [industry, setIndustry] = useState(organizationDetails.industry);
   const [teamSize, setTeamSize] = useState(organizationDetails.teamSize);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const handleContinue = () => {
     if (!industry || !teamSize) return;
@@ -71,7 +74,7 @@ export default function OrganizationDetailsScreen() {
             >
               {industry === item && (
                 <View style={styles.checkIcon}>
-                  <Check size={16} color={colors.white} />
+                  <Check size={16} color="#FFFFFF" />
                 </View>
               )}
               <Text
@@ -151,9 +154,10 @@ export default function OrganizationDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -163,7 +167,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -174,12 +178,12 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.lg,
   },
   sectionSpacing: {
@@ -195,10 +199,10 @@ const styles = StyleSheet.create({
     marginHorizontal: '1%',
     marginBottom: spacing.md,
     padding: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
   },
   optionCardSelected: {
     borderColor: colors.primary[500],
@@ -217,7 +221,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: fontSize.sm,
-    color: colors.gray[700],
+    color: colors.text.primary,
     fontWeight: fontWeight.medium,
   },
   optionTextSelected: {
@@ -233,10 +237,10 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
     alignItems: 'center',
     minWidth: 80,
   },
@@ -251,14 +255,14 @@ const styles = StyleSheet.create({
   sizeText: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.bold,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   sizeTextSelected: {
     color: colors.primary[700],
   },
   sizeLabel: {
     fontSize: fontSize.xs,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   actions: {

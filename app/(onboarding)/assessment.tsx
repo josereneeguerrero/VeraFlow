@@ -5,7 +5,8 @@ import { useQuery, useMutation } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Header } from '@/components/layout';
 import { Button, Card } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { useOnboardingStore } from '@/lib/store';
 import { api } from '@/convex/_generated/api';
 import { Check } from 'lucide-react-native';
@@ -14,6 +15,8 @@ export default function AssessmentScreen() {
   const router = useRouter();
   const { assessmentResponses, setAssessmentResponse, setStep } = useOnboardingStore();
   const questions = useQuery(api.assessments.getQuestions);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>(assessmentResponses);
@@ -113,7 +116,7 @@ export default function AssessmentScreen() {
                   styles.radio,
                   isSelected && styles.radioSelected,
                 ]}>
-                  {isSelected && <Check size={14} color={colors.white} />}
+                  {isSelected && <Check size={14} color="#FFFFFF" />}
                 </View>
                 <Text style={[
                   styles.optionText,
@@ -140,9 +143,10 @@ export default function AssessmentScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.xl,
@@ -155,14 +159,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   progress: {
     marginBottom: spacing.xl,
   },
   progressBar: {
     height: 4,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: 2,
     marginBottom: spacing.sm,
   },
@@ -173,7 +177,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   questionHeader: {
     marginBottom: spacing.xl,
@@ -192,7 +196,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.gray[200],
+    backgroundColor: colors.surfaceSecondary,
   },
   progressDotActive: {
     backgroundColor: colors.primary[200],
@@ -203,7 +207,7 @@ const styles = StyleSheet.create({
   question: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing['2xl'],
     lineHeight: 28,
   },
@@ -214,10 +218,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
     marginBottom: spacing.md,
   },
   optionCardSelected: {
@@ -229,7 +233,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.gray[300],
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -241,7 +245,7 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: fontSize.base,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   optionTextSelected: {
     color: colors.primary[700],
