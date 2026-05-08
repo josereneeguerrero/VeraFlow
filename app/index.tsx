@@ -27,6 +27,7 @@ export default function WelcomeScreen() {
       hasRedirected.current = true;
       router.replace('/(onboarding)/workspace-setup');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, isLoading, user]);
 
   if (isLoading) {

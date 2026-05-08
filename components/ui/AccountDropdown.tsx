@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useConvexAuth } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { User, LogOut, ChevronDown } from 'lucide-react-native';
 import { colors, borderRadius, fontSize, fontWeight, spacing, shadows } from '@/lib/constants';
@@ -22,21 +22,19 @@ interface AccountDropdownProps {
 export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
   const router = useRouter();
   const { signOut } = useAuthActions();
-  const { isAuthenticated } = useConvexAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const user = useQuery(api.users.getCurrentUser);
 
-  useEffect(() => {
-    if (isSigningOut && !isAuthenticated) {
-      router.replace('/');
-    }
-  }, [isSigningOut, isAuthenticated, router]);
-
   const handleSignOut = async () => {
     setIsOpen(false);
     setIsSigningOut(true);
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.log('Sign out error:', error);
+    }
+    router.dismissAll();
   };
 
   const handleNavigateToProfile = () => {

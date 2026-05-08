@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery, useConvexAuth } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { SafeArea, PageHeader } from '@/components/layout';
 import { Card, Avatar, Badge } from '@/components/ui';
@@ -15,7 +15,6 @@ import {
 export default function SettingsScreen() {
   const router = useRouter();
   const { signOut } = useAuthActions();
-  const { isAuthenticated } = useConvexAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const user = useQuery(api.users.getCurrentUser);
   const workspace = useQuery(api.workspaces.getCurrent);
@@ -24,15 +23,14 @@ export default function SettingsScreen() {
     workspace ? { workspaceId: workspace._id } : 'skip'
   );
 
-  useEffect(() => {
-    if (isSigningOut && !isAuthenticated) {
-      router.replace('/');
-    }
-  }, [isSigningOut, isAuthenticated, router]);
-
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    await signOut();
+    try {
+      await signOut();
+    } catch (error) {
+      console.log('Sign out error:', error);
+    }
+    router.dismissAll();
   };
 
   const menuItems = [
