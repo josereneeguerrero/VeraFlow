@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, fontSize, spacing } from '@/lib/constants';
+import { fontSize, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 interface DividerProps {
   label?: string;
@@ -8,6 +9,9 @@ interface DividerProps {
 }
 
 export function Divider({ label, style }: DividerProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+
   if (label) {
     return (
       <View style={[styles.containerWithLabel, style]}>
@@ -21,7 +25,7 @@ export function Divider({ label, style }: DividerProps) {
   return <View style={[styles.line, styles.fullLine, style]} />;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   containerWithLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -30,14 +34,14 @@ const styles = StyleSheet.create({
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.gray[200],
+    backgroundColor: colors.border,
   },
   fullLine: {
     marginVertical: spacing.lg,
   },
   label: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginHorizontal: spacing.md,
   },
 });

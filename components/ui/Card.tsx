@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, TouchableOpacity } from 'react-native';
-import { colors, borderRadius, spacing, shadows } from '@/lib/constants';
+import { borderRadius, spacing, shadows } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -17,10 +18,13 @@ export function Card({
   variant = 'default',
   padding = 'md',
 }: CardProps) {
+  const colors = useThemeColors();
+  const dynamicStyles = createStyles(colors);
+  
   const cardStyle = [
-    styles.base,
-    styles[variant],
-    styles[`padding_${padding}`],
+    dynamicStyles.base,
+    dynamicStyles[variant],
+    dynamicStyles[`padding_${padding}` as keyof typeof dynamicStyles],
     style,
   ];
 
@@ -35,10 +39,10 @@ export function Card({
   return <View style={cardStyle}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.white,
+    backgroundColor: colors.card.background,
   },
   default: {
     ...shadows.sm,
@@ -48,7 +52,7 @@ const styles = StyleSheet.create({
   },
   outlined: {
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.card.border,
   },
   padding_none: {
     padding: 0,

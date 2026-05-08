@@ -7,7 +7,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 interface ButtonProps {
   onPress: () => void;
@@ -34,6 +35,8 @@ export function Button({
   style,
   textStyle,
 }: ButtonProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const isDisabled = disabled || loading;
 
   return (
@@ -43,7 +46,7 @@ export function Button({
       style={[
         styles.base,
         styles[variant],
-        styles[`size_${size}`],
+        styles[`size_${size}` as keyof typeof styles],
         fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
         style,
@@ -53,7 +56,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator
           size="small"
-          color={variant === 'primary' ? colors.white : colors.primary[500]}
+          color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : colors.primary[500]}
         />
       ) : (
         <>
@@ -61,8 +64,8 @@ export function Button({
           <Text
             style={[
               styles.text,
-              styles[`text_${variant}`],
-              styles[`text_${size}`],
+              styles[`text_${variant}` as keyof typeof styles],
+              styles[`text_${size}` as keyof typeof styles],
               icon && styles.textWithIcon,
               textStyle,
             ]}
@@ -75,7 +78,7 @@ export function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -86,12 +89,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary[500],
   },
   secondary: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: colors.gray[300],
+    borderColor: colors.border,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -124,19 +127,19 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.semibold,
   },
   text_primary: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
   text_secondary: {
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   text_outline: {
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   text_ghost: {
     color: colors.primary[500],
   },
   text_danger: {
-    color: colors.white,
+    color: '#FFFFFF',
   },
   text_sm: {
     fontSize: fontSize.sm,

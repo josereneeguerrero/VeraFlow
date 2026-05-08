@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 
 export const getComplianceSummary = query({
   args: { workspaceId: v.id("workspaces") },
@@ -243,5 +244,139 @@ export const getAuditReadiness = query({
       completedWorkflows: completedWorkflows.length,
       criticalItemsCount: criticalOpen.length,
     };
+  },
+});
+
+export const getComplianceBreakdown = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const [workflows, workflowSteps, documents, members, assessments] = await Promise.all([
+      ctx.db
+        .query("workflows")
+        .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+        .collect(),
+      ctx.db.query("workflowSteps").collect(),
+      ctx.db
+        .query("documents")
+        .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+        .collect(),
+      ctx.db
+        .query("workspaceMembers")
+        .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+        .filter((q) => q.eq(q.field("status"), "active"))
+        .collect(),
+      ctx.db
+        .query("assessments")
+        .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+        .collect(),
+    ]);
+
+    const workflowIds = new Set(workflows.map((w) => w._id));
+    const relevantSteps = workflowSteps.filter((s) => workflowIds.has(s.workflowId));
+
+    const stepsRequiringDocs = relevantSteps.filter((s) => s.requiresDocumentation);
+    const stepsWithDocs = stepsRequiringDocs.filter((s) => s.documentationId);
+    const documentationScore = stepsRequiringDocs.length > 0
+      ? Math.round((stepsWithDocs.length / stepsRequiringDocs.length) * 100)
+      : documents.length > 0 ? 100 : 0;
+
+    const memberIds = members.map((m) => m.userId);
+    const memberAssessments = assessments.filter((a) => memberIds.includes(a.completedBy));
+    const trainingScore = members.length > 0
+      ? Math.round((memberAssessments.length / members.length) * 100)
+      : 0;
+
+    const activeWorkflows = workflows.filter((w) => w.status === "active" || w.status === "completed");
+    const progressingWorkflows = activeWorkflows.filter((w) => w.progress >= 50);
+    const processesScore = activeWorkflows.length > 0
+      ? Math.round((progressingWorkflows.length / activeWorkflows.length) * 100)
+      : 0;
+
+    return {
+      documentation: Math.min(documentationScore, 100),
+      training: Math.min(trainingScore, 100),
+      processes: Math.min(processesScore, 100),
+    };
+  },
+});
+
+export const getTeamMembersCount = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const members = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .collect();
+
+    return members.length;
+  },
+});
+
+export const getComplianceTrend = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+
+    const history = await ctx.db
+      .query("complianceHistory")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .order("desc")
+      .take(14);
+
+    if (history.length < 2) {
+      return { trend: 0, direction: "neutral" as const, lastWeekScore: null };
+    }
+
+    const currentScore = history[0]?.score || 0;
+    const weekAgoIndex = Math.min(7, history.length - 1);
+    const weekAgoScore = history[weekAgoIndex]?.score || currentScore;
+    const trend = currentScore - weekAgoScore;
+
+    return {
+      trend,
+      direction: trend > 0 ? "up" as const : trend < 0 ? "down" as const : "neutral" as const,
+      lastWeekScore: weekAgoScore,
+      history: history.reverse().map((h) => ({
+        date: h.recordedAt,
+        score: h.score,
+      })),
+    };
+  },
+});
+
+export const recordComplianceSnapshot = internalMutation({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfDay = today.getTime();
+
+    const existingSnapshot = await ctx.db
+      .query("complianceHistory")
+      .withIndex("by_workspace_date", (q) => 
+        q.eq("workspaceId", args.workspaceId).eq("recordedAt", startOfDay)
+      )
+      .first();
+
+    if (existingSnapshot) {
+      await ctx.db.patch(existingSnapshot._id, { score: workspace.readinessScore });
+    } else {
+      await ctx.db.insert("complianceHistory", {
+        workspaceId: args.workspaceId,
+        score: workspace.readinessScore,
+        recordedAt: startOfDay,
+      });
+    }
   },
 });

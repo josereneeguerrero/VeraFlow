@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, X } from 'lucide-react-native';
-import { colors, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { fontSize, fontWeight, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 interface HeaderProps {
   title?: string;
@@ -24,6 +25,8 @@ export function Header({
   transparent = false,
 }: HeaderProps) {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   const handleBack = () => {
     if (onBack) {
@@ -46,12 +49,12 @@ export function Header({
       <View style={styles.left}>
         {showBack && (
           <TouchableOpacity onPress={handleBack} style={styles.iconButton}>
-            <ChevronLeft size={24} color={colors.gray[900]} />
+            <ChevronLeft size={24} color={colors.text.primary} />
           </TouchableOpacity>
         )}
         {showClose && (
           <TouchableOpacity onPress={handleClose} style={styles.iconButton}>
-            <X size={24} color={colors.gray[900]} />
+            <X size={24} color={colors.text.primary} />
           </TouchableOpacity>
         )}
       </View>
@@ -76,18 +79,21 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
+  const colors = useThemeColors();
+  const styles = createPageStyles(colors);
+
   return (
-    <View style={pageStyles.container}>
-      <View style={pageStyles.textContainer}>
-        <Text style={pageStyles.title}>{title}</Text>
-        {subtitle && <Text style={pageStyles.subtitle}>{subtitle}</Text>}
+    <View style={styles.container}>
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{title}</Text>
+        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
       {action && <View>{action}</View>}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -96,7 +102,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     backgroundColor: colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   transparent: {
     backgroundColor: 'transparent',
@@ -114,7 +120,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     textAlign: 'center',
   },
   iconButton: {
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const pageStyles = StyleSheet.create({
+const createPageStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -136,11 +142,11 @@ const pageStyles = StyleSheet.create({
   title: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
 });

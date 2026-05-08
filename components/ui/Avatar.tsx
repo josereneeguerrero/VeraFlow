@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { colors, borderRadius, fontSize, fontWeight } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { getInitials } from '@/lib/utils';
 
 interface AvatarProps {
@@ -11,14 +12,16 @@ interface AvatarProps {
 }
 
 export function Avatar({ name, image, size = 'md', color }: AvatarProps) {
+  const colors = useThemeColors();
   const backgroundColor = color || colors.primary[500];
   const initials = name ? getInitials(name) : '?';
+  const styles = createStyles(colors);
 
   if (image) {
     return (
       <Image
         source={{ uri: image }}
-        style={[styles.image, styles[`size_${size}`]]}
+        style={[styles.image, styles[`size_${size}` as keyof typeof styles]]}
       />
     );
   }
@@ -27,11 +30,11 @@ export function Avatar({ name, image, size = 'md', color }: AvatarProps) {
     <View
       style={[
         styles.container,
-        styles[`size_${size}`],
+        styles[`size_${size}` as keyof typeof styles],
         { backgroundColor },
       ]}
     >
-      <Text style={[styles.initials, styles[`initials_${size}`]]}>
+      <Text style={[styles.initials, styles[`initials_${size}` as keyof typeof styles]]}>
         {initials}
       </Text>
     </View>
@@ -45,6 +48,9 @@ interface AvatarGroupProps {
 }
 
 export function AvatarGroup({ users, max = 4, size = 'md' }: AvatarGroupProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+  const groupStyles = createGroupStyles(colors);
   const visibleUsers = users.slice(0, max);
   const remaining = users.length - max;
 
@@ -66,11 +72,11 @@ export function AvatarGroup({ users, max = 4, size = 'md' }: AvatarGroupProps) {
           style={[
             groupStyles.avatarWrapper,
             groupStyles.remaining,
-            styles[`size_${size}`],
+            styles[`size_${size}` as keyof typeof styles],
             { marginLeft: -8 },
           ]}
         >
-          <Text style={[styles.initials, styles[`initials_${size}`]]}>
+          <Text style={[styles.initials, styles[`initials_${size}` as keyof typeof styles]]}>
             +{remaining}
           </Text>
         </View>
@@ -86,7 +92,7 @@ const sizes = {
   xl: 80,
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,7 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: sizes.xl / 2,
   },
   initials: {
-    color: colors.white,
+    color: '#FFFFFF',
     fontWeight: fontWeight.semibold,
   },
   initials_sm: {
@@ -132,18 +138,18 @@ const styles = StyleSheet.create({
   },
 });
 
-const groupStyles = StyleSheet.create({
+const createGroupStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   avatarWrapper: {
     borderWidth: 2,
-    borderColor: colors.white,
+    borderColor: colors.background,
     borderRadius: borderRadius.full,
   },
   remaining: {
-    backgroundColor: colors.gray[200],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },

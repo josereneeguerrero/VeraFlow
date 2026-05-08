@@ -3,10 +3,14 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
-import { Card, Button, Input } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { Card, Button, Input, Badge } from '@/components/ui';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
-import { Check, Plus, Trash2 } from 'lucide-react-native';
+import { Check, Plus, Trash2, FileText, Edit3, ChevronRight, Clock, Users } from 'lucide-react-native';
+import { Id } from '@/convex/_generated/dataModel';
+
+type CreateMode = 'choose' | 'template' | 'custom';
 
 interface Step {
   title: string;
@@ -17,9 +21,16 @@ interface Step {
 
 export default function CreateWorkflowScreen() {
   const router = useRouter();
-  const workspace = useQuery(api.workspaces.getCurrent);
-  const createWorkflow = useMutation(api.workflows.create);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   
+  const workspace = useQuery(api.workspaces.getCurrent);
+  const templates = useQuery(api.workflowTemplates.list);
+  const createWorkflow = useMutation(api.workflows.create);
+  const createFromTemplate = useMutation(api.workflowTemplates.createFromTemplate);
+  
+  const [mode, setMode] = useState<CreateMode>('choose');
+  const [selectedTemplate, setSelectedTemplate] = useState<Id<"workflowTemplates"> | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [steps, setSteps] = useState<Step[]>([
@@ -27,6 +38,8 @@ export default function CreateWorkflowScreen() {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const selectedTemplateData = templates?.find((t) => t._id === selectedTemplate);
 
   const addStep = () => {
     setSteps([
@@ -47,7 +60,27 @@ export default function CreateWorkflowScreen() {
     setSteps(newSteps);
   };
 
-  const handleCreate = async () => {
+  const handleCreateFromTemplate = async () => {
+    if (!workspace || !selectedTemplate) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      const workflowId = await createFromTemplate({
+        templateId: selectedTemplate,
+        workspaceId: workspace._id,
+        name: name.trim() || undefined,
+      });
+
+      router.replace(`/(tabs)/workflows/${workflowId}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create workflow');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateCustom = async () => {
     setError('');
 
     if (!name.trim()) {
@@ -80,9 +113,192 @@ export default function CreateWorkflowScreen() {
     }
   };
 
+  if (mode === 'choose') {
+    return (
+      <SafeArea>
+        <Header showClose title="Create Workflow" />
+        
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.pageTitle}>How would you like to start?</Text>
+          <Text style={styles.pageSubtitle}>
+            Choose from a template or create a custom workflow from scratch.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.modeCard}
+            onPress={() => setMode('template')}
+          >
+            <View style={styles.modeIconContainer}>
+              <FileText size={28} color={colors.primary[500]} />
+            </View>
+            <View style={styles.modeContent}>
+              <Text style={styles.modeTitle}>From Template</Text>
+              <Text style={styles.modeDescription}>
+                Start with a pre-built compliance workflow template
+              </Text>
+            </View>
+            <ChevronRight size={24} color={colors.text.tertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.modeCard}
+            onPress={() => setMode('custom')}
+          >
+            <View style={[styles.modeIconContainer, styles.modeIconSecondary]}>
+              <Edit3 size={28} color={colors.warning[500]} />
+            </View>
+            <View style={styles.modeContent}>
+              <Text style={styles.modeTitle}>Custom Workflow</Text>
+              <Text style={styles.modeDescription}>
+                Build your own workflow with custom steps
+              </Text>
+            </View>
+            <ChevronRight size={24} color={colors.text.tertiary} />
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeArea>
+    );
+  }
+
+  if (mode === 'template') {
+    if (selectedTemplate && selectedTemplateData) {
+      return (
+        <SafeArea>
+          <Header 
+            showBack 
+            title="Create from Template" 
+            onBack={() => setSelectedTemplate(null)}
+          />
+          
+          <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            <Card style={styles.templatePreview}>
+              <Badge label={selectedTemplateData.category} variant="primary" size="sm" />
+              <Text style={styles.templatePreviewTitle}>{selectedTemplateData.name}</Text>
+              <Text style={styles.templatePreviewDescription}>
+                {selectedTemplateData.description}
+              </Text>
+              
+              <View style={styles.templateMeta}>
+                <View style={styles.templateMetaItem}>
+                  <Clock size={16} color={colors.text.secondary} />
+                  <Text style={styles.templateMetaText}>
+                    {selectedTemplateData.estimatedDuration}
+                  </Text>
+                </View>
+                <View style={styles.templateMetaItem}>
+                  <Users size={16} color={colors.text.secondary} />
+                  <Text style={styles.templateMetaText}>
+                    {selectedTemplateData.steps.length} steps
+                  </Text>
+                </View>
+              </View>
+            </Card>
+
+            <View style={styles.section}>
+              <Input
+                label="Workflow Name (Optional)"
+                placeholder={selectedTemplateData.name}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Steps Preview</Text>
+              {selectedTemplateData.steps.map((step, index) => (
+                <View key={index} style={styles.stepPreview}>
+                  <View style={styles.stepPreviewNumber}>
+                    <Text style={styles.stepPreviewNumberText}>{step.order}</Text>
+                  </View>
+                  <View style={styles.stepPreviewContent}>
+                    <Text style={styles.stepPreviewTitle}>{step.title}</Text>
+                    <Text style={styles.stepPreviewDescription} numberOfLines={1}>
+                      {step.description}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.actions}>
+              <Button
+                title="Create Workflow"
+                onPress={handleCreateFromTemplate}
+                loading={loading}
+                fullWidth
+                size="lg"
+              />
+            </View>
+          </ScrollView>
+        </SafeArea>
+      );
+    }
+
+    return (
+      <SafeArea>
+        <Header 
+          showBack 
+          title="Choose Template" 
+          onBack={() => setMode('choose')}
+        />
+        
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+          <Text style={styles.sectionTitle}>Available Templates</Text>
+          <Text style={styles.sectionSubtitle}>
+            Select a template to preview and customize
+          </Text>
+
+          {templates?.map((template) => (
+            <TouchableOpacity
+              key={template._id}
+              style={styles.templateCard}
+              onPress={() => setSelectedTemplate(template._id)}
+            >
+              <View style={styles.templateHeader}>
+                <Badge 
+                  label={template.category} 
+                  variant={template.priority === 'critical' ? 'error' : template.priority === 'high' ? 'warning' : 'primary'} 
+                  size="sm" 
+                />
+                <Badge 
+                  label={`${template.steps.length} steps`} 
+                  variant="default" 
+                  size="sm" 
+                />
+              </View>
+              <Text style={styles.templateTitle}>{template.name}</Text>
+              <Text style={styles.templateDescription} numberOfLines={2}>
+                {template.description}
+              </Text>
+              <View style={styles.templateFooter}>
+                <View style={styles.templateDuration}>
+                  <Clock size={14} color={colors.text.tertiary} />
+                  <Text style={styles.templateDurationText}>
+                    {template.estimatedDuration}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={colors.text.tertiary} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </SafeArea>
+    );
+  }
+
   return (
     <SafeArea>
-      <Header showClose title="Create Workflow" />
+      <Header 
+        showBack 
+        title="Custom Workflow" 
+        onBack={() => setMode('choose')}
+      />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {error ? (
@@ -160,7 +376,7 @@ export default function CreateWorkflowScreen() {
                     styles.checkbox,
                     step.requiresApproval && styles.checkboxActive,
                   ]}>
-                    {step.requiresApproval && <Check size={14} color={colors.white} />}
+                    {step.requiresApproval && <Check size={14} color="#FFFFFF" />}
                   </View>
                   <Text style={styles.optionText}>Requires Approval</Text>
                 </TouchableOpacity>
@@ -176,7 +392,7 @@ export default function CreateWorkflowScreen() {
                     styles.checkbox,
                     step.requiresDocumentation && styles.checkboxActive,
                   ]}>
-                    {step.requiresDocumentation && <Check size={14} color={colors.white} />}
+                    {step.requiresDocumentation && <Check size={14} color="#FFFFFF" />}
                   </View>
                   <Text style={styles.optionText}>Requires Documentation</Text>
                 </TouchableOpacity>
@@ -189,14 +405,14 @@ export default function CreateWorkflowScreen() {
             onPress={addStep}
             variant="outline"
             fullWidth
-            icon={<Plus size={18} color={colors.gray[600]} />}
+            icon={<Plus size={18} color={colors.text.secondary} />}
           />
         </View>
 
         <View style={styles.actions}>
           <Button
             title="Create Workflow"
-            onPress={handleCreate}
+            onPress={handleCreateCustom}
             loading={loading}
             fullWidth
             size="lg"
@@ -207,13 +423,60 @@ export default function CreateWorkflowScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: spacing['3xl'],
+  },
+  pageTitle: {
+    fontSize: fontSize['2xl'],
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    marginBottom: spacing.sm,
+  },
+  pageSubtitle: {
+    fontSize: fontSize.base,
+    color: colors.text.secondary,
+    marginBottom: spacing.xl,
+  },
+  modeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+    backgroundColor: colors.card.background,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.card.border,
+  },
+  modeIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: colors.primary[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.lg,
+  },
+  modeIconSecondary: {
+    backgroundColor: colors.warning[50],
+  },
+  modeContent: {
+    flex: 1,
+  },
+  modeTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  modeDescription: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
   },
   errorContainer: {
     backgroundColor: colors.error[50],
@@ -231,13 +494,115 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   sectionSubtitle: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.lg,
+  },
+  templateCard: {
+    padding: spacing.lg,
+    backgroundColor: colors.card.background,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.card.border,
+  },
+  templateHeader: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  templateTitle: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  templateDescription: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: spacing.md,
+  },
+  templateFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  templateDuration: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  templateDurationText: {
+    fontSize: fontSize.sm,
+    color: colors.text.tertiary,
+    marginLeft: spacing.xs,
+  },
+  templatePreview: {
+    marginBottom: spacing.xl,
+  },
+  templatePreviewTitle: {
+    fontSize: fontSize.xl,
+    fontWeight: fontWeight.bold,
+    color: colors.text.primary,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  templatePreviewDescription: {
+    fontSize: fontSize.base,
+    color: colors.text.secondary,
+    lineHeight: 22,
+    marginBottom: spacing.md,
+  },
+  templateMeta: {
+    flexDirection: 'row',
+    gap: spacing.xl,
+  },
+  templateMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  templateMetaText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    marginLeft: spacing.xs,
+  },
+  stepPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  stepPreviewNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.primary[100],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  stepPreviewNumberText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary[700],
+  },
+  stepPreviewContent: {
+    flex: 1,
+  },
+  stepPreviewTitle: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  stepPreviewDescription: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
   },
   stepCard: {
     marginBottom: spacing.md,
@@ -278,7 +643,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.surface,
   },
   optionActive: {
     backgroundColor: colors.primary[50],
@@ -288,7 +653,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: colors.gray[300],
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
@@ -299,7 +664,7 @@ const styles = StyleSheet.create({
   },
   optionText: {
     fontSize: fontSize.sm,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
   actions: {
     marginTop: spacing.xl,

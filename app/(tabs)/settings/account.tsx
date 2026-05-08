@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, Input, Avatar } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useTheme, useThemeColors, ThemeMode, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
-import { User, Mail, Camera } from 'lucide-react-native';
+import { User, Mail, Camera, Sun, Moon, Smartphone, Check } from 'lucide-react-native';
+
+const themeOptions: { mode: ThemeMode; label: string; icon: any }[] = [
+  { mode: 'light', label: 'Light', icon: Sun },
+  { mode: 'dark', label: 'Dark', icon: Moon },
+  { mode: 'system', label: 'System', icon: Smartphone },
+];
 
 export default function AccountSettingsScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
+  const { themeMode, setThemeMode } = useTheme();
   const user = useQuery(api.users.getCurrentUser);
   const updateProfile = useMutation(api.users.updateProfile);
 
@@ -32,6 +41,8 @@ export default function AccountSettingsScreen() {
       setLoading(false);
     }
   };
+
+  const styles = createStyles(colors);
 
   return (
     <SafeArea>
@@ -72,6 +83,37 @@ export default function AccountSettingsScreen() {
           </View>
         </Card>
 
+        {/* Theme Selection */}
+        <View style={styles.themeSection}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <Card style={styles.themeCard}>
+            {themeOptions.map((option, index) => {
+              const Icon = option.icon;
+              const isSelected = themeMode === option.mode;
+              return (
+                <TouchableOpacity
+                  key={option.mode}
+                  style={[
+                    styles.themeOption,
+                    index < themeOptions.length - 1 && styles.themeOptionBorder,
+                  ]}
+                  onPress={() => setThemeMode(option.mode)}
+                >
+                  <View style={[styles.themeIconContainer, isSelected && styles.themeIconSelected]}>
+                    <Icon size={20} color={isSelected ? colors.primary[500] : colors.gray[400]} />
+                  </View>
+                  <Text style={[styles.themeLabel, isSelected && styles.themeLabelSelected]}>
+                    {option.label}
+                  </Text>
+                  {isSelected && (
+                    <Check size={20} color={colors.primary[500]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </Card>
+        </View>
+
         {success && (
           <View style={styles.successMessage}>
             <Text style={styles.successText}>Profile updated successfully!</Text>
@@ -109,9 +151,10 @@ export default function AccountSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -133,25 +176,71 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[700],
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
   emailValue: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.gray[50],
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.md,
   },
   email: {
     fontSize: fontSize.base,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     marginLeft: spacing.md,
   },
   hint: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     marginTop: spacing.sm,
+  },
+  themeSection: {
+    marginBottom: spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+    marginLeft: spacing.sm,
+  },
+  themeCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  themeOptionBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  themeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  themeIconSelected: {
+    backgroundColor: colors.primary[50],
+  },
+  themeLabel: {
+    flex: 1,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.medium,
+    color: colors.text.primary,
+  },
+  themeLabelSelected: {
+    color: colors.primary[500],
   },
   successMessage: {
     backgroundColor: colors.success[50],
@@ -180,12 +269,12 @@ const styles = StyleSheet.create({
   dangerLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   dangerDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginBottom: spacing.lg,
   },
   deleteButton: {

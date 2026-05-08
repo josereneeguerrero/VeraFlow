@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { getScoreColor } from '@/lib/utils';
 
 interface ProgressBarProps {
@@ -20,16 +21,18 @@ export function ProgressBar({
   color,
   style,
 }: ProgressBarProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
   const progressColor = color || getScoreColor(percentage);
 
   return (
     <View style={[styles.container, style]}>
-      <View style={[styles.track, styles[`track_${size}`]]}>
+      <View style={[styles.track, styles[`track_${size}` as keyof typeof styles]]}>
         <View
           style={[
             styles.fill,
-            styles[`fill_${size}`],
+            styles[`fill_${size}` as keyof typeof styles],
             { width: `${percentage}%`, backgroundColor: progressColor },
           ]}
         />
@@ -58,6 +61,8 @@ export function CircularProgress({
   showValue = true,
   label,
 }: CircularProgressProps) {
+  const colors = useThemeColors();
+  const styles = createCircularStyles(colors);
   const percentage = Math.min(Math.max(value, 0), 100);
   const progressColor = color || getScoreColor(percentage);
   const radius = (size - strokeWidth) / 2;
@@ -65,11 +70,11 @@ export function CircularProgress({
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <View style={[circularStyles.container, { width: size, height: size }]}>
-      <View style={circularStyles.svgContainer}>
+    <View style={[styles.container, { width: size, height: size }]}>
+      <View style={styles.svgContainer}>
         <View
           style={[
-            circularStyles.track,
+            styles.track,
             {
               width: size,
               height: size,
@@ -80,7 +85,7 @@ export function CircularProgress({
         />
         <View
           style={[
-            circularStyles.progress,
+            styles.progress,
             {
               width: size,
               height: size,
@@ -93,25 +98,25 @@ export function CircularProgress({
         />
       </View>
       {showValue && (
-        <View style={circularStyles.valueContainer}>
-          <Text style={[circularStyles.value, { color: progressColor }]}>
+        <View style={styles.valueContainer}>
+          <Text style={[styles.value, { color: progressColor }]}>
             {Math.round(percentage)}
           </Text>
-          {label && <Text style={circularStyles.label}>{label}</Text>}
+          {label && <Text style={styles.label}>{label}</Text>}
         </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   track: {
     flex: 1,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     borderRadius: borderRadius.full,
     overflow: 'hidden',
   },
@@ -140,11 +145,11 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
 });
 
-const circularStyles = StyleSheet.create({
+const createCircularStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -154,7 +159,7 @@ const circularStyles = StyleSheet.create({
   },
   track: {
     position: 'absolute',
-    borderColor: colors.gray[100],
+    borderColor: colors.surface,
   },
   progress: {
     position: 'absolute',
@@ -171,7 +176,7 @@ const circularStyles = StyleSheet.create({
   },
   label: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
 });

@@ -1,36 +1,54 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { useAuthActions } from '@convex-dev/auth/react';
 import { SafeArea, PageHeader } from '@/components/layout';
-import { Card, Avatar, Badge } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { Card, Avatar, Badge, OfflineBanner } from '@/components/ui';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 import { 
-  User, Building2, Link, Users, FileText, 
-  CreditCard, Bell, HelpCircle, LogOut, ChevronRight
+  User, Building2, Link, Users, FileText, FolderOpen,
+  CreditCard, Bell, HelpCircle, LogOut, ChevronRight,
+  CloudOff, RefreshCw, Wifi, WifiOff
 } from 'lucide-react-native';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const { signOut } = useAuthActions();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const user = useQuery(api.users.getCurrentUser);
   const workspace = useQuery(api.workspaces.getCurrent);
   const subscription = useQuery(
     api.billing.getCurrentPlan,
     workspace ? { workspaceId: workspace._id } : 'skip'
   );
+  const { isOnline, pendingActionsCount, syncNow } = useOfflineSync();
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncNow();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
-    router.replace('/');
     try {
       await signOut();
     } catch (error) {
       console.log('Sign out error:', error);
     }
+    setTimeout(() => {
+      router.dismissAll();
+    }, 50);
   };
 
   const menuItems = [
@@ -79,6 +97,12 @@ export default function SettingsScreen() {
       section: 'Data',
       items: [
         {
+          icon: FolderOpen,
+          label: 'Documents',
+          description: 'Manage uploaded files',
+          route: '/(tabs)/settings/documents',
+        },
+        {
           icon: FileText,
           label: 'Reports',
           description: 'View and export reports',
@@ -112,6 +136,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeArea>
+      <OfflineBanner />
       <PageHeader title="Settings" />
       
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -124,6 +149,48 @@ export default function SettingsScreen() {
             <Text style={styles.workspaceName}>{workspace?.name}</Text>
           </View>
         </Card>
+
+        {/* Sync Status Card */}
+        {(!isOnline || pendingActionsCount > 0) && (
+          <Card style={styles.syncCard}>
+            <View style={styles.syncHeader}>
+              {isOnline ? (
+                <Wifi size={20} color={colors.success[500]} />
+              ) : (
+                <WifiOff size={20} color={colors.warning[500]} />
+              )}
+              <Text style={styles.syncTitle}>
+                {isOnline ? 'Online' : 'Offline'}
+              </Text>
+            </View>
+            {pendingActionsCount > 0 && (
+              <>
+                <View style={styles.syncInfo}>
+                  <CloudOff size={16} color={colors.text.secondary} />
+                  <Text style={styles.syncText}>
+                    {pendingActionsCount} pending change{pendingActionsCount > 1 ? 's' : ''}
+                  </Text>
+                </View>
+                {isOnline && (
+                  <TouchableOpacity
+                    style={styles.syncButton}
+                    onPress={handleSync}
+                    disabled={isSyncing}
+                  >
+                    {isSyncing ? (
+                      <ActivityIndicator size="small" color={colors.primary[500]} />
+                    ) : (
+                      <>
+                        <RefreshCw size={16} color={colors.primary[500]} />
+                        <Text style={styles.syncButtonText}>Sync Now</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </Card>
+        )}
 
         {/* Menu Sections */}
         {menuItems.map((section) => (
@@ -142,7 +209,7 @@ export default function SettingsScreen() {
                     onPress={() => router.push(item.route as any)}
                   >
                     <View style={styles.menuIcon}>
-                      <Icon size={20} color={colors.gray[600]} />
+                      <Icon size={20} color={colors.text.secondary} />
                     </View>
                     <View style={styles.menuContent}>
                       <View style={styles.menuLabelRow}>
@@ -153,7 +220,7 @@ export default function SettingsScreen() {
                       </View>
                       <Text style={styles.menuDescription}>{item.description}</Text>
                     </View>
-                    <ChevronRight size={20} color={colors.gray[400]} />
+                    <ChevronRight size={20} color={colors.text.tertiary} />
                   </TouchableOpacity>
                 );
               })}
@@ -167,7 +234,7 @@ export default function SettingsScreen() {
           onPress={handleSignOut}
           disabled={isSigningOut}
         >
-          <LogOut size={20} color={isSigningOut ? colors.gray[400] : colors.error[500]} />
+          <LogOut size={20} color={isSigningOut ? colors.text.tertiary : colors.error[500]} />
           <Text style={[styles.signOutText, isSigningOut && styles.signOutTextDisabled]}>
             {isSigningOut ? 'Signing Out...' : 'Sign Out'}
           </Text>
@@ -179,9 +246,10 @@ export default function SettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -196,14 +264,54 @@ const styles = StyleSheet.create({
     marginLeft: spacing.lg,
     flex: 1,
   },
+  syncCard: {
+    marginBottom: spacing.xl,
+    backgroundColor: colors.surface,
+  },
+  syncHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  syncTitle: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    marginLeft: spacing.sm,
+  },
+  syncInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  syncText: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    marginLeft: spacing.sm,
+  },
+  syncButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary[50],
+    borderRadius: borderRadius.md,
+  },
+  syncButtonText: {
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.medium,
+    color: colors.primary[500],
+    marginLeft: spacing.sm,
+  },
   profileName: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   profileEmail: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   workspaceName: {
@@ -217,7 +325,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: spacing.sm,
@@ -233,13 +341,13 @@ const styles = StyleSheet.create({
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   menuIcon: {
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.md,
@@ -254,12 +362,12 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginRight: spacing.sm,
   },
   menuDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     marginTop: spacing.xs,
   },
   signOutButton: {
@@ -272,7 +380,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   signOutButtonDisabled: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
   },
   signOutText: {
     fontSize: fontSize.base,
@@ -281,11 +389,11 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   signOutTextDisabled: {
-    color: colors.gray[400],
+    color: colors.text.tertiary,
   },
   version: {
     fontSize: fontSize.sm,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     textAlign: 'center',
     marginTop: spacing.xl,
   },

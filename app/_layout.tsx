@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import { ConvexReactClient } from 'convex/react';
 import * as SecureStore from 'expo-secure-store';
+import { ThemeProvider, useTheme } from '@/lib/theme';
 
 const convex = new ConvexReactClient(
   process.env.EXPO_PUBLIC_CONVEX_URL as string,
@@ -19,14 +20,17 @@ const authStorage =
         removeItem: SecureStore.deleteItemAsync,
       };
 
-export default function RootLayout() {
+function AppContent() {
+  const { isDark } = useTheme();
+  
   return (
-    <ConvexAuthProvider client={convex} storage={authStorage}>
-      <StatusBar style="dark" />
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
+          contentStyle: { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' },
         }}
       >
         <Stack.Screen name="index" />
@@ -34,6 +38,16 @@ export default function RootLayout() {
         <Stack.Screen name="(onboarding)" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
       </Stack>
-    </ConvexAuthProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ConvexAuthProvider client={convex} storage={authStorage}>
+        <AppContent />
+      </ConvexAuthProvider>
+    </ThemeProvider>
   );
 }

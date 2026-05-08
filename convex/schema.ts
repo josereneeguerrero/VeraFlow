@@ -18,6 +18,8 @@ export default defineSchema({
     avatar: v.optional(v.string()),
     onboardingCompleted: v.boolean(),
     currentWorkspaceId: v.optional(v.id("workspaces")),
+    pushToken: v.optional(v.string()),
+    notificationsEnabled: v.optional(v.boolean()),
   }).index("by_userId", ["userId"]),
 
   workspaces: defineTable({
@@ -122,7 +124,7 @@ export default defineSchema({
 
   recommendations: defineTable({
     workspaceId: v.id("workspaces"),
-    type: v.string(),
+    type: v.optional(v.string()),
     title: v.string(),
     description: v.string(),
     priority: v.union(
@@ -132,7 +134,9 @@ export default defineSchema({
       v.literal("low")
     ),
     category: v.string(),
-    suggestedAction: v.string(),
+    suggestedAction: v.optional(v.string()),
+    impact: v.optional(v.string()),
+    actionItems: v.optional(v.array(v.string())),
     relatedWorkflowId: v.optional(v.id("workflows")),
     status: v.union(
       v.literal("new"),
@@ -140,8 +144,10 @@ export default defineSchema({
       v.literal("acted"),
       v.literal("dismissed")
     ),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()),
     actedAt: v.optional(v.number()),
+    aiGenerated: v.optional(v.boolean()),
+    generatedAt: v.optional(v.number()),
   })
     .index("by_workspace", ["workspaceId"])
     .index("by_status", ["workspaceId", "status"])
@@ -230,4 +236,12 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_polarSubscriptionId", ["polarSubscriptionId"])
     .index("by_customerEmail", ["customerEmail"]),
+
+  complianceHistory: defineTable({
+    workspaceId: v.id("workspaces"),
+    score: v.number(),
+    recordedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_date", ["workspaceId", "recordedAt"]),
 });

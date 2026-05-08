@@ -9,7 +9,8 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Eye, EyeOff } from 'lucide-react-native';
-import { colors, borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -30,6 +31,8 @@ export function Input({
   secureTextEntry,
   ...props
 }: InputProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -48,7 +51,7 @@ export function Input({
         {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
         <TextInput
           style={[styles.input, leftIcon && styles.inputWithLeftIcon]}
-          placeholderTextColor={colors.gray[400]}
+          placeholderTextColor={colors.input.placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           secureTextEntry={isPassword && !isPasswordVisible}
@@ -60,9 +63,9 @@ export function Input({
             style={styles.rightIcon}
           >
             {isPasswordVisible ? (
-              <EyeOff size={20} color={colors.gray[400]} />
+              <EyeOff size={20} color={colors.text.tertiary} />
             ) : (
-              <Eye size={20} color={colors.gray[400]} />
+              <Eye size={20} color={colors.text.tertiary} />
             )}
           </TouchableOpacity>
         )}
@@ -76,23 +79,23 @@ export function Input({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: spacing.lg,
   },
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[700],
+    color: colors.text.secondary,
     marginBottom: spacing.sm,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.gray[200],
+    borderColor: colors.input.border,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.white,
+    backgroundColor: colors.input.background,
   },
   inputContainerFocused: {
     borderColor: colors.primary[500],
@@ -105,7 +108,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: fontSize.base,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   inputWithLeftIcon: {
     paddingLeft: spacing.sm,
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.tertiary,
     marginTop: spacing.xs,
   },
 });

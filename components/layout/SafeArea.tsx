@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle, StatusBar } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
-import { colors } from '@/lib/constants';
+import { useTheme, useThemeColors } from '@/lib/theme';
 
 interface SafeAreaProps {
   children: React.ReactNode;
@@ -14,11 +14,18 @@ export function SafeArea({
   children,
   style,
   edges = ['top', 'bottom'],
-  backgroundColor = colors.background,
+  backgroundColor,
 }: SafeAreaProps) {
+  const { isDark } = useTheme();
+  const colors = useThemeColors();
+  const bgColor = backgroundColor ?? colors.background;
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor }, style]}>
-      <StatusBar barStyle="dark-content" backgroundColor={backgroundColor} />
+    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }, style]}>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor={bgColor} 
+      />
       {children}
     </SafeAreaView>
   );
@@ -31,7 +38,13 @@ interface ScreenContainerProps {
 }
 
 export function ScreenContainer({ children, style }: ScreenContainerProps) {
-  return <View style={[styles.screen, style]}>{children}</View>;
+  const colors = useThemeColors();
+  
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }, style]}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -40,6 +53,5 @@ const styles = StyleSheet.create({
   },
   screen: {
     flex: 1,
-    backgroundColor: colors.background,
   },
 });

@@ -1,27 +1,47 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useQuery } from 'convex/react';
+import { useQuery, useAction } from 'convex/react';
 import { SafeArea, PageHeader } from '@/components/layout';
-import { Card, PriorityBadge, EmptyState } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { Card, PriorityBadge, EmptyState, Badge, Button } from '@/components/ui';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime } from '@/lib/utils';
-import { Lightbulb, ChevronRight, Clock, History } from 'lucide-react-native';
+import { Lightbulb, ChevronRight, Clock, History, Sparkles, RefreshCw } from 'lucide-react-native';
 
 export default function RecommendationsScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+  const cardStyles = createCardStyles(colors);
+
   const workspace = useQuery(api.workspaces.getCurrent);
   const recommendations = useQuery(
     api.recommendations.getActive,
     workspace ? { workspaceId: workspace._id } : 'skip'
   );
+  const generateRecommendations = useAction(api.ai.generateRecommendations);
 
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const handleGenerateAI = async () => {
+    if (!workspace) return;
+    
+    setGenerating(true);
+    try {
+      await generateRecommendations({ workspaceId: workspace._id });
+    } catch (error) {
+      console.error('Failed to generate recommendations:', error);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const criticalItems = recommendations?.filter(r => r.priority === 'critical') || [];
@@ -38,7 +58,7 @@ export default function RecommendationsScreen() {
             style={styles.historyButton}
             onPress={() => router.push('/(tabs)/recommendations/history')}
           >
-            <History size={20} color={colors.gray[600]} />
+            <History size={20} color={colors.text.secondary} />
           </TouchableOpacity>
         }
       />
@@ -50,6 +70,29 @@ export default function RecommendationsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
+        {/* AI Generation Card */}
+        <Card style={styles.aiCard}>
+          <View style={styles.aiHeader}>
+            <View style={styles.aiIcon}>
+              <Sparkles size={24} color={colors.primary[500]} />
+            </View>
+            <View style={styles.aiContent}>
+              <Text style={styles.aiTitle}>AI-Powered Insights</Text>
+              <Text style={styles.aiDescription}>
+                Generate personalized recommendations based on your compliance data.
+              </Text>
+            </View>
+          </View>
+          <Button
+            title={generating ? "Generating..." : "Generate New Recommendations"}
+            onPress={handleGenerateAI}
+            loading={generating}
+            variant="primary"
+            fullWidth
+            icon={<RefreshCw size={18} color="#FFFFFF" />}
+          />
+        </Card>
+
         {recommendations && recommendations.length > 0 ? (
           <>
             {criticalItems.length > 0 && (
@@ -63,6 +106,8 @@ export default function RecommendationsScreen() {
                   <RecommendationCard
                     key={rec._id}
                     recommendation={rec}
+                    colors={colors}
+                    cardStyles={cardStyles}
                     onPress={() => router.push(`/(tabs)/recommendations/${rec._id}`)}
                   />
                 ))}
@@ -80,6 +125,8 @@ export default function RecommendationsScreen() {
                   <RecommendationCard
                     key={rec._id}
                     recommendation={rec}
+                    colors={colors}
+                    cardStyles={cardStyles}
                     onPress={() => router.push(`/(tabs)/recommendations/${rec._id}`)}
                   />
                 ))}
@@ -97,6 +144,8 @@ export default function RecommendationsScreen() {
                   <RecommendationCard
                     key={rec._id}
                     recommendation={rec}
+                    colors={colors}
+                    cardStyles={cardStyles}
                     onPress={() => router.push(`/(tabs)/recommendations/${rec._id}`)}
                   />
                 ))}
@@ -105,9 +154,9 @@ export default function RecommendationsScreen() {
           </>
         ) : (
           <EmptyState
-            icon={<Lightbulb size={48} color={colors.gray[300]} />}
+            icon={<Lightbulb size={48} color={colors.text.tertiary} />}
             title="No recommendations"
-            description="Great job! You've addressed all recommendations. Check back later for new insights."
+            description="Great job! You've addressed all recommendations. Use AI to generate new insights."
           />
         )}
       </ScrollView>
@@ -117,16 +166,28 @@ export default function RecommendationsScreen() {
 
 function RecommendationCard({
   recommendation,
+  colors,
+  cardStyles,
   onPress,
 }: {
   recommendation: any;
+  colors: ThemeColors;
+  cardStyles: any;
   onPress: () => void;
 }) {
   return (
     <Card style={cardStyles.container} onPress={onPress}>
       <View style={cardStyles.header}>
-        <View style={cardStyles.icon}>
-          <Lightbulb size={20} color={colors.primary[500]} />
+        <View style={cardStyles.iconRow}>
+          <View style={cardStyles.icon}>
+            <Lightbulb size={20} color={colors.primary[500]} />
+          </View>
+          {recommendation.aiGenerated && (
+            <View style={cardStyles.aiBadge}>
+              <Sparkles size={12} color={colors.primary[500]} />
+              <Text style={cardStyles.aiBadgeText}>AI</Text>
+            </View>
+          )}
         </View>
         <PriorityBadge priority={recommendation.priority} />
       </View>
@@ -141,32 +202,67 @@ function RecommendationCard({
           <Text style={cardStyles.categoryText}>{recommendation.category}</Text>
         </View>
         <View style={cardStyles.time}>
-          <Clock size={12} color={colors.gray[400]} />
+          <Clock size={12} color={colors.text.tertiary} />
           <Text style={cardStyles.timeText}>
-            {formatRelativeTime(recommendation.createdAt)}
+            {formatRelativeTime(recommendation.generatedAt || recommendation.createdAt || Date.now())}
           </Text>
         </View>
-        <ChevronRight size={16} color={colors.gray[400]} />
+        <ChevronRight size={16} color={colors.text.tertiary} />
       </View>
     </Card>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   historyButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
     paddingBottom: spacing['3xl'],
+  },
+  aiCard: {
+    marginBottom: spacing.xl,
+    backgroundColor: colors.primary[50],
+    borderColor: colors.primary[200],
+    borderWidth: 1,
+  },
+  aiHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: spacing.lg,
+  },
+  aiIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  aiContent: {
+    flex: 1,
+  },
+  aiTitle: {
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.xs,
+  },
+  aiDescription: {
+    fontSize: fontSize.sm,
+    color: colors.text.secondary,
+    lineHeight: 20,
   },
   section: {
     marginBottom: spacing.xl,
@@ -185,20 +281,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     flex: 1,
   },
   sectionCount: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
-    backgroundColor: colors.gray[100],
+    color: colors.text.secondary,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
   },
 });
 
-const cardStyles = StyleSheet.create({
+const createCardStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },
@@ -208,6 +304,10 @@ const cardStyles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: spacing.md,
   },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   icon: {
     width: 40,
     height: 40,
@@ -216,15 +316,30 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.primary[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    marginLeft: spacing.sm,
+  },
+  aiBadgeText: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    color: colors.primary[600],
+    marginLeft: 4,
+  },
   title: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   description: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     lineHeight: 20,
     marginBottom: spacing.md,
   },
@@ -233,7 +348,7 @@ const cardStyles = StyleSheet.create({
     alignItems: 'center',
   },
   category: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.sm,
@@ -241,7 +356,7 @@ const cardStyles = StyleSheet.create({
   },
   categoryText: {
     fontSize: fontSize.xs,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   time: {
     flexDirection: 'row',
@@ -250,7 +365,7 @@ const cardStyles = StyleSheet.create({
   },
   timeText: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     marginLeft: spacing.xs,
   },
 });

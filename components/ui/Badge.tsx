@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
-import { colors, borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { borderRadius, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 
 type BadgeVariant = 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info';
 
@@ -19,10 +20,13 @@ export function Badge({
   style,
   dot = false,
 }: BadgeProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+
   return (
-    <View style={[styles.base, styles[variant], styles[`size_${size}`], style]}>
-      {dot && <View style={[styles.dot, styles[`dot_${variant}`]]} />}
-      <Text style={[styles.text, styles[`text_${variant}`], styles[`text_${size}`]]}>
+    <View style={[styles.base, styles[variant], styles[`size_${size}` as keyof typeof styles], style]}>
+      {dot && <View style={[styles.dot, styles[`dot_${variant}` as keyof typeof styles]]} />}
+      <Text style={[styles.text, styles[`text_${variant}` as keyof typeof styles], styles[`text_${size}` as keyof typeof styles]]}>
         {label}
       </Text>
     </View>
@@ -66,14 +70,14 @@ export function PriorityBadge({ priority, size = 'sm' }: PriorityBadgeProps) {
   return <Badge label={config.label} variant={config.variant} size={size} />;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   base: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: borderRadius.full,
   },
   default: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
   },
   primary: {
     backgroundColor: colors.primary[50],
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeight.medium,
   },
   text_default: {
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   text_primary: {
     color: colors.primary[700],
@@ -132,7 +136,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   dot_default: {
-    backgroundColor: colors.gray[400],
+    backgroundColor: colors.text.tertiary,
   },
   dot_primary: {
     backgroundColor: colors.primary[500],

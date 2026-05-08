@@ -3,17 +3,22 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } 
 import { useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
-import { Card, Button, Avatar, Badge, ProgressBar, AccountDropdown } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { Card, Button, Avatar, Badge, ProgressBar, AccountDropdown, OfflineBanner } from '@/components/ui';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { formatRelativeTime, getScoreColor } from '@/lib/utils';
 import { 
   Bell, ChevronRight, AlertCircle, CheckCircle,
-  Clock, ArrowUpRight, Sparkles
+  Clock, ArrowUpRight, Sparkles, Search
 } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
+  const quickStyles = createQuickStyles(colors);
+  
   const user = useQuery(api.users.getCurrentUser);
   const workspace = useQuery(api.workspaces.getCurrent);
   const recommendations = useQuery(
@@ -49,6 +54,7 @@ export default function HomeScreen() {
 
   return (
     <SafeArea>
+      <OfflineBanner />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -62,8 +68,14 @@ export default function HomeScreen() {
             <Text style={styles.userName}>{user?.name || 'there'}</Text>
           </View>
           <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Bell size={24} color={colors.gray[700]} />
+            <TouchableOpacity 
+              style={styles.iconButton}
+              onPress={() => router.push('/(tabs)/search')}
+            >
+              <Search size={24} color={colors.text.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconButton}>
+              <Bell size={24} color={colors.text.primary} />
               <View style={styles.notificationBadge} />
             </TouchableOpacity>
             <AccountDropdown size="md" />
@@ -129,7 +141,7 @@ export default function HomeScreen() {
                       {task.workflow?.name} • Awaiting approval
                     </Text>
                   </View>
-                  <ChevronRight size={20} color={colors.gray[400]} />
+                  <ChevronRight size={20} color={colors.text.tertiary} />
                 </View>
               </Card>
             ))}
@@ -168,7 +180,7 @@ export default function HomeScreen() {
                     {rec.description}
                   </Text>
                 </View>
-                <ChevronRight size={20} color={colors.gray[400]} />
+                <ChevronRight size={20} color={colors.text.tertiary} />
               </Card>
             ))}
           </View>
@@ -176,26 +188,34 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <Text style={styles.sectionTitleSimple}>Quick Actions</Text>
           <View style={styles.quickActions}>
-            <QuickAction
-              icon={<CheckCircle size={24} color={colors.success[500]} />}
-              label="New Workflow"
+            <TouchableOpacity 
+              style={quickStyles.container} 
               onPress={() => router.push('/(tabs)/workflows/create')}
-            />
-            <QuickAction
-              icon={<Bell size={24} color={colors.primary[500]} />}
-              label="View Alerts"
+            >
+              <View style={quickStyles.icon}>
+                <CheckCircle size={24} color={colors.success[500]} />
+              </View>
+              <Text style={quickStyles.label}>New Workflow</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={quickStyles.container} 
               onPress={() => router.push('/(tabs)/recommendations')}
-            />
+            >
+              <View style={quickStyles.icon}>
+                <Bell size={24} color={colors.primary[500]} />
+              </View>
+              <Text style={quickStyles.label}>View Alerts</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
         {/* Recent Activity */}
         {recentActivity.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <Card style={styles.activityCard}>
+            <Text style={styles.sectionTitleSimple}>Recent Activity</Text>
+            <Card style={styles.activityCard} padding="none">
               {recentActivity.map((activity: any, index: number) => (
                 <View 
                   key={activity._id} 
@@ -224,26 +244,10 @@ export default function HomeScreen() {
   );
 }
 
-function QuickAction({
-  icon,
-  label,
-  onPress,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity style={quickStyles.container} onPress={onPress}>
-      <View style={quickStyles.icon}>{icon}</View>
-      <Text style={quickStyles.label}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -258,22 +262,22 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   greeting: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   userName: {
     fontSize: fontSize['2xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
-  notificationButton: {
+  iconButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -286,7 +290,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: colors.error[500],
     borderWidth: 2,
-    borderColor: colors.gray[100],
+    borderColor: colors.surface,
   },
   scoreCard: {
     marginBottom: spacing.xl,
@@ -300,7 +304,7 @@ const styles = StyleSheet.create({
   scoreLabel: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   viewMore: {
     flexDirection: 'row',
@@ -336,7 +340,7 @@ const styles = StyleSheet.create({
   },
   scoreMessage: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   section: {
     marginBottom: spacing.xl,
@@ -354,8 +358,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: fontSize.lg,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginLeft: spacing.sm,
+  },
+  sectionTitleSimple: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.semibold,
+    color: colors.text.primary,
+    marginBottom: spacing.md,
   },
   seeAll: {
     fontSize: fontSize.sm,
@@ -384,12 +394,12 @@ const styles = StyleSheet.create({
   taskTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   taskSubtitle: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   recCard: {
     flexDirection: 'row',
@@ -410,19 +420,19 @@ const styles = StyleSheet.create({
   recTitle: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.medium,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   recDescription: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   quickActions: {
     flexDirection: 'row',
     gap: spacing.md,
   },
   activityCard: {
-    padding: 0,
+    overflow: 'hidden',
   },
   activityItem: {
     flexDirection: 'row',
@@ -431,7 +441,7 @@ const styles = StyleSheet.create({
   },
   activityItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray[100],
+    borderBottomColor: colors.border,
   },
   activityContent: {
     flex: 1,
@@ -439,20 +449,20 @@ const styles = StyleSheet.create({
   },
   activityText: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
   },
   activityName: {
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
   },
   activityTime: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     marginTop: spacing.xs,
   },
 });
 
-const quickStyles = StyleSheet.create({
+const createQuickStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: spacing.lg,
@@ -464,7 +474,7 @@ const quickStyles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -472,6 +482,6 @@ const quickStyles = StyleSheet.create({
   label: {
     fontSize: fontSize.sm,
     fontWeight: fontWeight.medium,
-    color: colors.gray[700],
+    color: colors.text.primary,
   },
 });

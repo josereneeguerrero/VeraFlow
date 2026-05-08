@@ -6,5 +6,8 @@ export { Badge, StatusBadge, PriorityBadge } from './Badge';
 export { Avatar, AvatarGroup } from './Avatar';
 export { EmptyState } from './EmptyState';
 export { Divider } from './Divider';
+export { SearchBar } from './SearchBar';
+export { DocumentPicker } from './DocumentPicker';
+export { OfflineIndicator, OfflineBanner } from './OfflineIndicator';
 export { AccountDropdown } from './AccountDropdown';
 export { SubscriptionPopup } from './SubscriptionPopup';
