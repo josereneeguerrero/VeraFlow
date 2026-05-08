@@ -125,6 +125,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   text: {
     fontWeight: fontWeight.semibold,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   text_primary: {
     color: '#FFFFFF',
@@ -143,12 +145,15 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   },
   text_sm: {
     fontSize: fontSize.sm,
+    lineHeight: 18,
   },
   text_md: {
     fontSize: fontSize.base,
+    lineHeight: 20,
   },
   text_lg: {
     fontSize: fontSize.lg,
+    lineHeight: 24,
   },
   textWithIcon: {
     marginLeft: spacing.sm,

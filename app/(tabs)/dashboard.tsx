@@ -362,6 +362,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: fontWeight.semibold,
     color: colors.error[700],
+    paddingVertical: 4,
+    lineHeight: 20,
   },
   section: {
     marginBottom: spacing.xl,
@@ -382,6 +384,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: fontSize.sm,
     color: colors.primary[500],
     fontWeight: fontWeight.medium,
+    paddingVertical: 4,
+    lineHeight: 20,
   },
   workflowCard: {
     marginHorizontal: spacing.lg,
@@ -461,6 +465,8 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   nextActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 2,
+    paddingBottom: 2,
   },
   nextActionButtonText: {
     fontSize: fontSize.sm,

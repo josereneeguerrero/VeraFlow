@@ -5,7 +5,8 @@ import { useConvexAuth } from 'convex/react';
 import { useQuery } from 'convex/react';
 import { SafeArea } from '@/components/layout';
 import { Button } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Shield, CheckCircle, BarChart3 } from 'lucide-react-native';
 
@@ -14,6 +15,8 @@ export default function WelcomeScreen() {
   const { isAuthenticated, isLoading } = useConvexAuth();
   const user = useQuery(api.users.getCurrentUser);
   const hasRedirected = useRef(false);
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
 
   useEffect(() => {
     if (isLoading || !isAuthenticated || hasRedirected.current) {
@@ -53,16 +56,19 @@ export default function WelcomeScreen() {
 
         <View style={styles.features}>
           <FeatureItem
+            colors={colors}
             icon={<CheckCircle size={24} color={colors.success[500]} />}
             title="Guided Workflows"
             description="Step-by-step compliance processes"
           />
           <FeatureItem
+            colors={colors}
             icon={<BarChart3 size={24} color={colors.primary[500]} />}
             title="Real-time Dashboard"
             description="Track your compliance readiness"
           />
           <FeatureItem
+            colors={colors}
             icon={<Shield size={24} color={colors.warning[500]} />}
             title="Smart Recommendations"
             description="AI-powered compliance insights"
@@ -97,23 +103,27 @@ function FeatureItem({
   icon,
   title,
   description,
+  colors,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  colors: ThemeColors;
 }) {
+  const styles = createFeatureStyles(colors);
+
   return (
-    <View style={featureStyles.container}>
-      <View style={featureStyles.iconContainer}>{icon}</View>
-      <View style={featureStyles.textContainer}>
-        <Text style={featureStyles.title}>{title}</Text>
-        <Text style={featureStyles.description}>{description}</Text>
+    <View style={styles.container}>
+      <View style={styles.iconContainer}>{icon}</View>
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.description}>{description}</Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: spacing.xl,
@@ -125,7 +135,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: fontSize.base,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
   header: {
     alignItems: 'center',
@@ -135,7 +145,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 80,
     height: 80,
-    borderRadius: 20,
+    borderRadius: borderRadius.xl,
     backgroundColor: colors.primary[50],
     alignItems: 'center',
     justifyContent: 'center',
@@ -144,12 +154,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize['4xl'],
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: fontSize.lg,
-    color: colors.gray[500],
+    color: colors.text.secondary,
     textAlign: 'center',
   },
   features: {
@@ -163,26 +173,26 @@ const styles = StyleSheet.create({
   },
   footer: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     textAlign: 'center',
     marginTop: spacing.xl,
   },
 });
 
-const featureStyles = StyleSheet.create({
+const createFeatureStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.lg,
     padding: spacing.lg,
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
   },
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.lg,
@@ -193,11 +203,11 @@ const featureStyles = StyleSheet.create({
   title: {
     fontSize: fontSize.base,
     fontWeight: fontWeight.semibold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.xs,
   },
   description: {
     fontSize: fontSize.sm,
-    color: colors.gray[500],
+    color: colors.text.secondary,
   },
 });

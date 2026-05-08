@@ -4,7 +4,8 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQuery, useMutation } from 'convex/react';
 import { SafeArea, Header } from '@/components/layout';
 import { Card, Button, PriorityBadge } from '@/components/ui';
-import { colors, fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { fontSize, fontWeight, spacing, borderRadius } from '@/lib/constants';
+import { useThemeColors, ThemeColors } from '@/lib/theme';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { formatDate } from '@/lib/utils';
@@ -16,6 +17,8 @@ import {
 export default function RecommendationDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const recommendation = useQuery(api.recommendations.get, { id: id as Id<"recommendations"> });
   const markViewed = useMutation(api.recommendations.markViewed);
   const markActed = useMutation(api.recommendations.markActed);
@@ -32,7 +35,7 @@ export default function RecommendationDetailScreen() {
       <SafeArea>
         <Header showBack title="Recommendation" />
         <View style={styles.loading}>
-          <Text>Loading...</Text>
+          <Text style={styles.loadingText}>Loading...</Text>
         </View>
       </SafeArea>
     );
@@ -117,7 +120,7 @@ export default function RecommendationDetailScreen() {
             onPress={handleTakeAction}
             fullWidth
             size="lg"
-            icon={<CheckCircle size={20} color={colors.white} />}
+            icon={<CheckCircle size={20} color="#FFFFFF" />}
           />
           <Button
             title="Dismiss"
@@ -125,7 +128,7 @@ export default function RecommendationDetailScreen() {
             variant="ghost"
             fullWidth
             style={styles.dismissButton}
-            icon={<XCircle size={20} color={colors.gray[500]} />}
+            icon={<XCircle size={20} color={colors.text.secondary} />}
           />
         </View>
 
@@ -138,14 +141,19 @@ export default function RecommendationDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  loadingText: {
+    fontSize: fontSize.base,
+    color: colors.text.secondary,
+  },
   scrollView: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     padding: spacing.lg,
@@ -170,12 +178,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSize.xl,
     fontWeight: fontWeight.bold,
-    color: colors.gray[900],
+    color: colors.text.primary,
     marginBottom: spacing.md,
   },
   description: {
     fontSize: fontSize.base,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     lineHeight: 24,
     marginBottom: spacing.lg,
   },
@@ -185,19 +193,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   category: {
-    backgroundColor: colors.gray[100],
+    backgroundColor: colors.surface,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
   },
   categoryText: {
     fontSize: fontSize.sm,
-    color: colors.gray[600],
+    color: colors.text.secondary,
     fontWeight: fontWeight.medium,
   },
   date: {
     fontSize: fontSize.sm,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
   },
   whyCard: {
     backgroundColor: colors.warning[50],
@@ -216,7 +224,7 @@ const styles = StyleSheet.create({
   },
   whyText: {
     fontSize: fontSize.sm,
-    color: colors.warning[700],
+    color: colors.text.secondary,
     lineHeight: 22,
   },
   actionCard: {
@@ -236,7 +244,7 @@ const styles = StyleSheet.create({
   actionText: {
     flex: 1,
     fontSize: fontSize.base,
-    color: colors.primary[700],
+    color: colors.text.primary,
     marginLeft: spacing.md,
     fontWeight: fontWeight.medium,
   },
@@ -248,7 +256,7 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     fontSize: fontSize.xs,
-    color: colors.gray[400],
+    color: colors.text.tertiary,
     textAlign: 'center',
     lineHeight: 18,
   },
