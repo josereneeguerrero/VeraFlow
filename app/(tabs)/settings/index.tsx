@@ -25,13 +25,11 @@ export default function SettingsScreen() {
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
+    router.replace('/');
     try {
       await signOut();
-      router.replace('/');
     } catch (error) {
       console.log('Sign out error:', error);
-    } finally {
-      setIsSigningOut(false);
     }
   };
 

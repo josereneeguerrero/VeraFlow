@@ -29,13 +29,11 @@ export function AccountDropdown({ size = 'md' }: AccountDropdownProps) {
   const handleSignOut = async () => {
     setIsOpen(false);
     setIsSigningOut(true);
+    router.replace('/');
     try {
       await signOut();
-      router.replace('/');
     } catch (error) {
       console.log('Sign out error:', error);
-    } finally {
-      setIsSigningOut(false);
     }
   };
 
